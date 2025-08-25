@@ -2,8 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { workspaceService, type Workspace } from "@/lib/appwrite-services";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useWorkspaces = () => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["workspaces"],
     queryFn: async () => {
@@ -33,6 +36,7 @@ export const useWorkspaces = () => {
         );
       }
     },
+    enabled: !!user, // Only run if user is logged in
     staleTime: 10 * 60 * 1000, // 10 minutes instead of 5
     refetchOnWindowFocus: false, // Prevent excessive refetching
     refetchOnMount: false, // Only refetch when data is stale

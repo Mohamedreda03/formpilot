@@ -2,8 +2,11 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formService, type Form } from "@/lib/appwrite-services";
+import { useAuth } from "@/contexts/AuthContext";
 
 export const useForms = (workspaceId: string) => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["forms", workspaceId],
     queryFn: async () => {
@@ -20,7 +23,7 @@ export const useForms = (workspaceId: string) => {
         );
       }
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!user, // Only run if user is logged in
     staleTime: 10 * 60 * 1000, // 10 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
@@ -102,6 +105,8 @@ export const useDeleteForm = () => {
 
 // Hook لجلب عدد النماذج لكل workspace
 export const useWorkspaceFormsCount = (workspaceId: string) => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["forms-count", workspaceId],
     queryFn: async () => {
@@ -113,6 +118,6 @@ export const useWorkspaceFormsCount = (workspaceId: string) => {
         return 0;
       }
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!user, // Only run if user is logged in
   });
 };

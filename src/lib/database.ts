@@ -1,8 +1,63 @@
-import { databases } from "./appwrite";
+import { databases, account } from "./appwrite";
 import { ID, Query } from "appwrite";
 
 // Database configuration
 export const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
+
+// Get current user ID
+async function getCurrentUserId(): Promise<string> {
+  try {
+    const user = await account.get();
+    return user.$id;
+  } catch (error) {
+    console.error("Error getting current user:", error);
+    throw new Error("User not authenticated");
+  }
+}
+
+// Check if user has access to workspace (owner or member)
+async function checkWorkspaceAccess(workspaceId: string, requiredRoles?: string[]): Promise<boolean> {
+  try {
+    const userId = await getCurrentUserId();
+    
+    // First, check if user is the owner of the workspace
+    const workspace = await databases.getDocument(
+      DATABASE_ID,
+      COLLECTIONS.WORKSPACES,
+      workspaceId
+    );
+
+    if (workspace.ownerId === userId) {
+      return true; // Owner always has access
+    }
+
+    // If not owner, check if user is a member with appropriate role
+    const membershipQuery = [
+      Query.equal("workspaceId", workspaceId),
+      Query.equal("userId", userId),
+      Query.equal("status", "active")
+    ];
+
+    if (requiredRoles && requiredRoles.length > 0) {
+      membershipQuery.push(Query.equal("role", requiredRoles));
+    }
+
+    const membershipResponse = await databases.listDocuments(
+      DATABASE_ID,
+      COLLECTIONS.WORKSPACE_MEMBERS,
+      membershipQuery
+    );
+
+    return membershipResponse.documents.length > 0;
+  } catch (error) {
+    console.error("Error checking workspace access:", error);
+    // If user is not authenticated, return false instead of throwing
+    if (error instanceof Error && error.message.includes("User not authenticated")) {
+      return false;
+    }
+    return false;
+  }
+}
 
 // Collection IDs from environment variables
 export const COLLECTIONS = {
@@ -291,6 +346,13 @@ export const workspaceMemberDB = {
 
   async getWorkspaceMembers(workspaceId: string) {
     try {
+      // Check if current user has access to this workspace
+      const hasAccess = await checkWorkspaceAccess(workspaceId);
+      if (!hasAccess) {
+        throw new Error("Access denied: You are not a member of this workspace");
+      }
+
+      // Get all members of the workspace
       return await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.WORKSPACE_MEMBERS,
@@ -302,7 +364,16 @@ export const workspaceMemberDB = {
       );
     } catch (error) {
       console.error("Error getting workspace members:", error);
-      throw error;
+      // If it's an authentication error, throw a more specific error
+      if (error instanceof Error) {
+        if (error.message.includes("User not authenticated")) {
+          throw new Error("Please log in to access workspace members");
+        }
+        if (error.message.includes("Access denied")) {
+          throw error;
+        }
+      }
+      throw new Error("Failed to load workspace members");
     }
   },
 
@@ -339,6 +410,39 @@ export const workspaceMemberDB = {
 
   async getUserRole(workspaceId: string, userId: string) {
     try {
+      const currentUserId = await getCurrentUserId();
+      
+      // Users can only check their own role OR if they have access to the workspace
+      if (currentUserId !== userId) {
+        // Check if current user has access to this workspace
+        const hasAccess = await checkWorkspaceAccess(workspaceId);
+        if (!hasAccess) {
+          throw new Error("Access denied: You are not a member of this workspace");
+        }
+      }
+
+      // First, check if the user is the owner of the workspace
+      const workspace = await databases.getDocument(
+        DATABASE_ID,
+        COLLECTIONS.WORKSPACES,
+        workspaceId
+      );
+
+      if (workspace.ownerId === userId) {
+        // Return a mock WorkspaceMember object for the owner
+        return {
+          $id: "owner-" + userId,
+          workspaceId: workspaceId,
+          userId: userId,
+          userEmail: "", // Will be filled by the component if needed
+          userName: "", // Will be filled by the component if needed
+          role: "owner",
+          joinedAt: workspace.$createdAt,
+          status: "active"
+        };
+      }
+
+      // If not owner, check workspace_members table
       const result = await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.WORKSPACE_MEMBERS,
@@ -390,6 +494,12 @@ export const workspaceInviteDB = {
 
   async getWorkspaceInvites(workspaceId: string) {
     try {
+      // Check if current user has access to this workspace
+      const hasAccess = await checkWorkspaceAccess(workspaceId);
+      if (!hasAccess) {
+        throw new Error("Access denied: You are not a member of this workspace");
+      }
+
       return await databases.listDocuments(
         DATABASE_ID,
         COLLECTIONS.WORKSPACE_INVITES,
@@ -401,7 +511,16 @@ export const workspaceInviteDB = {
       );
     } catch (error) {
       console.error("Error getting workspace invites:", error);
-      throw error;
+      // If it's an authentication error, throw a more specific error
+      if (error instanceof Error) {
+        if (error.message.includes("User not authenticated")) {
+          throw new Error("Please log in to access workspace invites");
+        }
+        if (error.message.includes("Access denied")) {
+          throw error;
+        }
+      }
+      throw new Error("Failed to load workspace invites");
     }
   },
 

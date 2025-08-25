@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { workspaceMemberDB, workspaceInviteDB } from "@/lib/database";
 import { Models } from "appwrite";
+import { useAuth } from "@/contexts/AuthContext";
 
 // Types
 export interface WorkspaceMember extends Models.Document {
@@ -31,6 +32,8 @@ export interface WorkspaceInvite extends Models.Document {
 
 // Get workspace members
 export const useWorkspaceMembers = (workspaceId: string) => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["workspace-members", workspaceId],
     queryFn: async () => {
@@ -44,12 +47,14 @@ export const useWorkspaceMembers = (workspaceId: string) => {
         throw error;
       }
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!user, // Only run if user is logged in
   });
 };
 
 // Get workspace invites
 export const useWorkspaceInvites = (workspaceId: string) => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["workspace-invites", workspaceId],
     queryFn: async () => {
@@ -63,12 +68,14 @@ export const useWorkspaceInvites = (workspaceId: string) => {
         throw error;
       }
     },
-    enabled: !!workspaceId,
+    enabled: !!workspaceId && !!user, // Only run if user is logged in
   });
 };
 
 // Get current user role in workspace
 export const useUserWorkspaceRole = (workspaceId: string, userId: string) => {
+  const { user } = useAuth();
+
   return useQuery({
     queryKey: ["user-workspace-role", workspaceId, userId],
     queryFn: async () => {
@@ -87,7 +94,7 @@ export const useUserWorkspaceRole = (workspaceId: string, userId: string) => {
         return null;
       }
     },
-    enabled: !!workspaceId && !!userId,
+    enabled: !!workspaceId && !!userId && !!user, // Only run if user is logged in
   });
 };
 

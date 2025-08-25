@@ -52,6 +52,63 @@ import {
 } from "@/hooks/use-team-management";
 import { useAuth } from "@/contexts/AuthContext";
 
+// Helper functions for permissions
+const canUserManageMember = (
+  currentUserRole: string,
+  targetMemberRole: string
+): boolean => {
+  // Owner can manage everyone
+  if (currentUserRole === "owner") {
+    return true;
+  }
+
+  // Admin can manage member and viewer, but not owner or other admins
+  if (currentUserRole === "admin") {
+    return targetMemberRole === "member" || targetMemberRole === "viewer";
+  }
+
+  // Member and viewer cannot manage anyone
+  return false;
+};
+
+const canUserInvite = (currentUserRole: string): boolean => {
+  return currentUserRole === "owner" || currentUserRole === "admin";
+};
+
+const getInvitableRoles = (
+  currentUserRole: string
+): Array<"admin" | "member" | "viewer"> => {
+  if (currentUserRole === "owner") {
+    return ["admin", "member", "viewer"];
+  }
+
+  if (currentUserRole === "admin") {
+    return ["member", "viewer"];
+  }
+
+  return [];
+};
+
+const getEditableRoles = (
+  currentUserRole: string,
+  targetMemberRole: string
+): Array<"owner" | "admin" | "member" | "viewer"> => {
+  if (currentUserRole === "owner") {
+    // Owner can set any role except downgrading themselves from owner
+    return ["admin", "member", "viewer"];
+  }
+
+  if (
+    currentUserRole === "admin" &&
+    (targetMemberRole === "member" || targetMemberRole === "viewer")
+  ) {
+    // Admin can only edit member/viewer roles, and only to member/viewer
+    return ["member", "viewer"];
+  }
+
+  return [];
+};
+
 // Role configurations
 const roleConfig = {
   owner: {
@@ -91,18 +148,33 @@ function InviteModal({
   workspaceId,
   workspaceName,
   onSuccess,
+  currentUserRole,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   workspaceName: string;
   onSuccess?: () => void;
+  currentUserRole: string;
 }) {
   const { user } = useAuth();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"admin" | "member" | "viewer">("member");
 
   const inviteToWorkspace = useInviteToWorkspace();
+
+  // Get invitable roles based on current user's role
+  const invitableRoles = getInvitableRoles(currentUserRole);
+
+  // Check if user can invite
+  const canInvite = canUserInvite(currentUserRole);
+
+  // Set default role based on available roles
+  useEffect(() => {
+    if (invitableRoles.length > 0 && !invitableRoles.includes(role)) {
+      setRole(invitableRoles[0]);
+    }
+  }, [invitableRoles, role]);
 
   const handleInvite = async () => {
     if (!email.trim()) {
@@ -197,7 +269,7 @@ function InviteModal({
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(roleConfig)
-                  .filter(([key]) => key !== "owner")
+                  .filter(([key]) => invitableRoles.includes(key as any))
                   .map(([key, config]) => (
                     <SelectItem key={key} value={key}>
                       <div className="flex items-center gap-3">
@@ -225,7 +297,9 @@ function InviteModal({
           </Button>
           <Button
             onClick={handleInvite}
-            disabled={inviteToWorkspace.isPending || !email.trim()}
+            disabled={
+              inviteToWorkspace.isPending || !email.trim() || !canInvite
+            }
           >
             {inviteToWorkspace.isPending ? (
               <>
@@ -251,16 +325,28 @@ function EditRoleModal({
   open,
   onOpenChange,
   onUpdate,
+  currentUserRole,
 }: {
   member: WorkspaceMember | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate?: () => void;
+  currentUserRole: string;
 }) {
   const [selectedRole, setSelectedRole] = useState<
     "owner" | "admin" | "member" | "viewer"
   >("member");
   const updateMemberRole = useUpdateMemberRole();
+
+  // Get editable roles based on current user's role and target member's role
+  const editableRoles = member
+    ? getEditableRoles(currentUserRole, member.role)
+    : [];
+
+  // Check if current user can manage this member
+  const canManage = member
+    ? canUserManageMember(currentUserRole, member.role)
+    : false;
 
   useEffect(() => {
     if (member) {
@@ -356,23 +442,32 @@ function EditRoleModal({
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(roleConfig).map(([key, config]) => (
-                  <SelectItem
-                    key={key}
-                    value={key}
-                    disabled={key === "owner" && member.role !== "owner"}
-                  >
-                    <div className="flex items-center gap-3">
-                      <config.icon className="h-4 w-4" />
-                      <div>
-                        <div className="font-medium">{config.label}</div>
-                        <div className="text-xs text-muted-foreground">
-                          {config.description}
+                {Object.entries(roleConfig)
+                  .filter(
+                    ([key]) =>
+                      key === selectedRole || // Always include current role
+                      editableRoles.includes(key as any) // Include editable roles
+                  )
+                  .map(([key, config]) => (
+                    <SelectItem
+                      key={key}
+                      value={key}
+                      disabled={
+                        !editableRoles.includes(key as any) &&
+                        key !== selectedRole
+                      }
+                    >
+                      <div className="flex items-center gap-3">
+                        <config.icon className="h-4 w-4" />
+                        <div>
+                          <div className="font-medium">{config.label}</div>
+                          <div className="text-xs text-muted-foreground">
+                            {config.description}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </SelectItem>
-                ))}
+                    </SelectItem>
+                  ))}
               </SelectContent>
             </Select>
           </div>
@@ -384,7 +479,9 @@ function EditRoleModal({
           <Button
             onClick={handleUpdateRole}
             disabled={
-              updateMemberRole.isPending || selectedRole === member.role
+              updateMemberRole.isPending ||
+              selectedRole === member.role ||
+              !canManage
             }
           >
             {updateMemberRole.isPending ? (
@@ -409,13 +506,16 @@ function TeamModal({
   workspaceId,
   workspaceName,
   onRefresh,
+  currentUserRole,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   workspaceId: string;
   workspaceName: string;
   onRefresh?: () => void;
+  currentUserRole: string;
 }) {
+  const { user } = useAuth();
   const [selectedMember, setSelectedMember] = useState<WorkspaceMember | null>(
     null
   );
@@ -537,7 +637,7 @@ function TeamModal({
                           <config.icon className="h-3 w-3 mr-1" />
                           {config.label}
                         </Badge>
-                        {member.role !== "owner" && (
+                        {canUserManageMember(currentUserRole, member.role) && (
                           <>
                             <Button
                               variant="ghost"
@@ -632,6 +732,7 @@ function TeamModal({
         open={editRoleOpen}
         onOpenChange={setEditRoleOpen}
         onUpdate={handleRoleUpdate}
+        currentUserRole={currentUserRole}
       />
     </>
   );
@@ -694,7 +795,7 @@ export default function TeamManagement({
     );
   }
 
-  const canInvite = userRole.role === "owner" || userRole.role === "admin";
+  const canInvite = canUserInvite(userRole.role);
 
   const handleRefresh = () => {
     refetchMembers();
@@ -733,6 +834,7 @@ export default function TeamManagement({
         workspaceId={workspaceId}
         workspaceName={workspaceName}
         onSuccess={handleRefresh}
+        currentUserRole={userRole?.role || ""}
       />
 
       <TeamModal
@@ -741,6 +843,7 @@ export default function TeamManagement({
         workspaceId={workspaceId}
         workspaceName={workspaceName}
         onRefresh={handleRefresh}
+        currentUserRole={userRole?.role || ""}
       />
     </>
   );

@@ -164,10 +164,10 @@ export default function LandingPage() {
               </Link>
             ) : (
               <>
-                <Link href="/auth">
+                <Link href="/login">
                   <Button variant="ghost">Sign In</Button>
                 </Link>
-                <Link href="/auth">
+                <Link href="/signup">
                   <Button>Get Started</Button>
                 </Link>
               </>
@@ -192,7 +192,7 @@ export default function LandingPage() {
             flows.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href={user ? "/dashboard" : "/auth"}>
+            <Link href={user ? "/dashboard" : "/login"}>
               <Button size="lg" className="w-full sm:w-auto">
                 {user ? "Go to Dashboard" : "Start Building for Free"}
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -286,7 +286,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={user ? "/dashboard" : "/auth"} className="block">
+                  <Link href={user ? "/dashboard" : "/login"} className="block">
                     <Button
                       className="w-full"
                       variant={plan.popular ? "default" : "outline"}
@@ -313,7 +313,7 @@ export default function LandingPage() {
               amazing forms and collect valuable data.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={user ? "/dashboard" : "/auth"}>
+              <Link href={user ? "/dashboard" : "/login"}>
                 <Button
                   size="lg"
                   variant="secondary"

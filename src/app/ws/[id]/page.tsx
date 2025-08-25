@@ -58,6 +58,7 @@ import { toast } from "sonner";
 import { useForms } from "@/hooks/use-forms";
 import { useWorkspace, useUpdateWorkspace } from "@/hooks/use-workspaces";
 import CreateFormButton from "@/components/CreateFormButton";
+import { Separator } from "@/components/ui/separator";
 
 // Loading Component
 function WorkspaceLoadingState() {
@@ -575,8 +576,8 @@ export default function WorkspacePage() {
 
         <div className="flex items-center gap-2">
           {/* Team Management */}
-          <TeamManagement 
-            workspaceId={workspaceId} 
+          <TeamManagement
+            workspaceId={workspaceId}
             workspaceName={workspaceName}
           />
 
@@ -590,6 +591,8 @@ export default function WorkspacePage() {
           </CreateFormButton>
         </div>
       </div>
+
+      <Separator />
 
       {/* Forms Section */}
       <div className="space-y-4">

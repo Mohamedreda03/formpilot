@@ -273,8 +273,8 @@ export default function InvitePage() {
                     Login to Accept Invitation
                   </Button>
                   <p className="text-xs text-center text-gray-500">
-                    Don't have an account? You'll be able to create one after
-                    clicking login.
+                    Don't have an account? You can create one after clicking
+                    login.
                   </p>
                 </div>
               </div>
