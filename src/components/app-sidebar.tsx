@@ -18,18 +18,14 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+  CreateWorkspaceDialog,
+  CreateFormDialog,
+  CreateFormButton,
+  CreateWorkspaceButton,
+} from "@/components/ui/create-dialog";
 import { Plus, Search, Folders, Building } from "lucide-react";
-import { useWorkspaces, useCreateWorkspace } from "@/hooks/use-workspaces";
-import { useForms } from "@/hooks/use-forms";
-import { toast } from "sonner";
+import { useWorkspaces } from "@/hooks/use-workspaces";
+import { useWorkspaceFormsCount } from "@/hooks/use-forms";
 
 interface AppSidebarProps {
   onWorkspaceSelect?: (workspaceId: string) => void;
@@ -43,12 +39,6 @@ export function AppSidebar({
   currentWorkspaceName = "Private",
 }: AppSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
-  const [isCreateFormDialogOpen, setIsCreateFormDialogOpen] = useState(false);
-  const [isCreateWorkspaceDialogOpen, setIsCreateWorkspaceDialogOpen] =
-    useState(false);
-  const [newFormName, setNewFormName] = useState("");
-  const [newFormDescription, setNewFormDescription] = useState("");
-  const [newWorkspaceName, setNewWorkspaceName] = useState("");
 
   const router = useRouter();
 
@@ -58,7 +48,6 @@ export function AppSidebar({
     isLoading: workspacesLoading,
     error: workspacesError,
   } = useWorkspaces();
-  const createWorkspaceMutation = useCreateWorkspace();
 
   // Fallback data if there's an error
   const fallbackWorkspaces = [
@@ -78,35 +67,7 @@ export function AppSidebar({
       onWorkspaceSelect(workspaceId);
     } else {
       // Navigate to workspace page with dynamic route using router
-      router.push(`/workspace/${workspaceId}`);
-    }
-  };
-
-  const handleCreateForm = () => {
-    console.log("Create new form:", {
-      name: newFormName,
-      description: newFormDescription,
-    });
-    setNewFormName("");
-    setNewFormDescription("");
-    setIsCreateFormDialogOpen(false);
-  };
-
-  const handleCreateWorkspace = async () => {
-    if (!newWorkspaceName.trim()) return;
-
-    try {
-      await createWorkspaceMutation.mutateAsync({
-        name: newWorkspaceName.trim(),
-        description: `Workspace for ${newWorkspaceName.trim()}`,
-      });
-
-      toast.success("Workspace created successfully!");
-      setNewWorkspaceName("");
-      setIsCreateWorkspaceDialogOpen(false);
-    } catch (error) {
-      console.error("Error creating workspace:", error);
-      toast.error("Failed to create workspace");
+      router.push(`/ws/${workspaceId}`);
     }
   };
 
@@ -118,65 +79,11 @@ export function AppSidebar({
     <Sidebar>
       <SidebarHeader className="p-4">
         {/* Create Form Button */}
-        <Dialog
-          open={isCreateFormDialogOpen}
-          onOpenChange={setIsCreateFormDialogOpen}
-        >
-          <DialogTrigger asChild>
-            <Button className="w-full flex items-center justify-center">
-              <div className="flex items-center gap-2">
-                <Plus className="h-4 w-4" />
-                Create Form
-              </div>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Create New Form</DialogTitle>
-              <DialogDescription>
-                Create a new form in {currentWorkspaceName} workspace.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <label htmlFor="form-name" className="text-sm font-medium">
-                  Form Name
-                </label>
-                <Input
-                  id="form-name"
-                  placeholder="Enter form name..."
-                  value={newFormName}
-                  onChange={(e) => setNewFormName(e.target.value)}
-                />
-              </div>
-              <div className="grid gap-2">
-                <label
-                  htmlFor="form-description"
-                  className="text-sm font-medium"
-                >
-                  Description
-                </label>
-                <Input
-                  id="form-description"
-                  placeholder="Enter form description..."
-                  value={newFormDescription}
-                  onChange={(e) => setNewFormDescription(e.target.value)}
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsCreateFormDialogOpen(false)}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleCreateForm} disabled={!newFormName.trim()}>
-                Create Form
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+        <CreateFormButton
+          workspaceId={selectedWorkspaceId}
+          workspaceName={currentWorkspaceName}
+          className="w-full"
+        />
       </SidebarHeader>
 
       <SidebarContent className="px-4">
@@ -188,54 +95,13 @@ export function AppSidebar({
                 <Folders className="h-4 w-4" />
                 <span className="font-medium">Workspaces</span>
               </div>
-              <Dialog
-                open={isCreateWorkspaceDialogOpen}
-                onOpenChange={setIsCreateWorkspaceDialogOpen}
+              <CreateWorkspaceButton
+                variant="ghost"
+                size="sm"
+                className="h-6 w-6 p-0"
               >
-                <DialogTrigger asChild>
-                  <Button variant="secondary" size="sm" className="h-6 w-6">
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-[425px]">
-                  <DialogHeader>
-                    <DialogTitle>Create New Workspace</DialogTitle>
-                    <DialogDescription>
-                      Create a new workspace to organize your forms.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="grid gap-4 py-4">
-                    <div className="grid gap-2">
-                      <label
-                        htmlFor="workspace-name"
-                        className="text-sm font-medium"
-                      >
-                        Workspace Name
-                      </label>
-                      <Input
-                        id="workspace-name"
-                        placeholder="Enter workspace name..."
-                        value={newWorkspaceName}
-                        onChange={(e) => setNewWorkspaceName(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                  <DialogFooter>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsCreateWorkspaceDialogOpen(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      onClick={handleCreateWorkspace}
-                      disabled={!newWorkspaceName.trim()}
-                    >
-                      Create Workspace
-                    </Button>
-                  </DialogFooter>
-                </DialogContent>
-              </Dialog>
+                <Plus className="h-3 w-3" />
+              </CreateWorkspaceButton>
             </div>
           </SidebarGroupLabel>
 
@@ -253,21 +119,12 @@ export function AppSidebar({
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {filteredWorkspaces.map((workspace) => (
-                <SidebarMenuItem key={workspace.$id}>
-                  <SidebarMenuButton
-                    isActive={selectedWorkspaceId === workspace.$id}
-                    onClick={() => handleWorkspaceSelect(workspace.$id || "")}
-                    className="w-full justify-between py-2"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Building className="h-4 w-4" />
-                      <span className="font-medium">{workspace.name}</span>
-                    </div>
-                    <Badge variant="secondary" className="text-xs">
-                      0
-                    </Badge>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <WorkspaceMenuItem
+                  key={workspace.$id}
+                  workspace={workspace}
+                  isActive={selectedWorkspaceId === workspace.$id}
+                  onSelect={() => handleWorkspaceSelect(workspace.$id || "")}
+                />
               ))}
             </SidebarMenu>
 
@@ -280,5 +137,36 @@ export function AppSidebar({
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
+  );
+}
+
+// مكون منفصل لعرض workspace item مع عدد النماذج
+function WorkspaceMenuItem({
+  workspace,
+  isActive,
+  onSelect,
+}: {
+  workspace: any;
+  isActive: boolean;
+  onSelect: () => void;
+}) {
+  const { data: formsCount = 0 } = useWorkspaceFormsCount(workspace.$id);
+
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        isActive={isActive}
+        onClick={onSelect}
+        className="w-full justify-between py-2"
+      >
+        <div className="flex items-center gap-3">
+          <Building className="h-4 w-4" />
+          <span className="font-medium">{workspace.name}</span>
+        </div>
+        <Badge variant="secondary" className="text-xs">
+          {formsCount}
+        </Badge>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
   );
 }

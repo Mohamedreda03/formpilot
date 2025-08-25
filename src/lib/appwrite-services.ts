@@ -2,8 +2,10 @@ import { databases, account } from "@/lib/appwrite";
 import { ID, Query, Permission, Role } from "appwrite";
 
 const DATABASE_ID = process.env.NEXT_PUBLIC_APPWRITE_DATABASE_ID!;
-const WORKSPACES_COLLECTION_ID = "workspaces";
-const FORMS_COLLECTION_ID = "forms";
+const WORKSPACES_COLLECTION_ID =
+  process.env.NEXT_PUBLIC_APPWRITE_WORKSPACES_COLLECTION_ID!;
+const FORMS_COLLECTION_ID =
+  process.env.NEXT_PUBLIC_APPWRITE_FORMS_COLLECTION_ID!;
 
 export interface Workspace {
   $id?: string;
@@ -11,22 +13,27 @@ export interface Workspace {
   $updatedAt?: string;
   name: string;
   description?: string;
-  status: "active" | "paused";
-  isDefault?: boolean;
   ownerId: string;
+  color?: string;
+  icon?: string;
+  isActive?: boolean;
+  formsCount?: number;
+  membersCount?: number;
 }
 
 export interface Form {
   $id?: string;
   $createdAt?: string;
   $updatedAt?: string;
-  name: string;
+  title: string;
   description?: string;
-  workspaceId: string;
-  status: "active" | "inactive";
-  formData?: any;
-  submissions?: number;
-  ownerId: string;
+  fields: string;
+  userId: string;
+  workspaceId?: string;
+  isPublic?: boolean;
+  isActive?: boolean;
+  submissionCount?: number;
+  slug?: string;
 }
 
 // Get current user ID for permissions
@@ -77,7 +84,8 @@ export const workspaceService = {
   createWorkspace: async (data: {
     name: string;
     description?: string;
-    isDefault?: boolean;
+    color?: string;
+    icon?: string;
   }): Promise<Workspace> => {
     try {
       const userId = await getCurrentUserId();
@@ -89,9 +97,12 @@ export const workspaceService = {
         {
           name: data.name,
           description: data.description || "",
-          status: "active",
-          isDefault: data.isDefault || false,
           ownerId: userId,
+          color: data.color || "#3b82f6",
+          icon: data.icon || "folder",
+          isActive: true,
+          formsCount: 0,
+          membersCount: 1,
         },
         [
           Permission.read(Role.user(userId)),
@@ -160,9 +171,10 @@ export const formService = {
 
   // Create a new form
   createForm: async (data: {
-    name: string;
+    title: string;
     description?: string;
-    workspaceId: string;
+    workspaceId?: string;
+    fields?: any;
   }): Promise<Form> => {
     try {
       const userId = await getCurrentUserId();
@@ -172,12 +184,18 @@ export const formService = {
         FORMS_COLLECTION_ID,
         ID.unique(),
         {
-          name: data.name,
+          title: data.title,
           description: data.description || "",
-          workspaceId: data.workspaceId,
-          status: "active",
-          submissions: 0,
-          ownerId: userId,
+          fields: JSON.stringify(data.fields || []),
+          userId: userId,
+          workspaceId: data.workspaceId || "",
+          isPublic: false,
+          isActive: true,
+          submissionCount: 0,
+          slug: data.title
+            .toLowerCase()
+            .replace(/\s+/g, "-")
+            .replace(/[^\w-]/g, ""),
         },
         [
           Permission.read(Role.user(userId)),

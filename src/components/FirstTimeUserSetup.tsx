@@ -16,7 +16,6 @@ export function FirstTimeUserSetup() {
         name: "My First Workspace",
         description:
           "Welcome to your first workspace! Start creating amazing forms.",
-        isDefault: true,
       });
     }
   }, [user, isLoading, workspaces.length, createWorkspaceMutation]);

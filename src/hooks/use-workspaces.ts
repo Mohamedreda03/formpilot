@@ -2,22 +2,39 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { workspaceService, type Workspace } from "@/lib/appwrite-services";
-import { mockWorkspaces } from "@/lib/mock-data";
 
 export const useWorkspaces = () => {
   return useQuery({
     queryKey: ["workspaces"],
     queryFn: async () => {
       try {
-        // Temporarily disabled: return await workspaceService.getWorkspaces();
-        // Using mock data until ownerId attribute is added to Appwrite
-        console.warn(
-          "Using mock data - ownerId attribute not configured in Appwrite"
-        );
-        return mockWorkspaces;
+        console.log("Fetching workspaces...");
+        const workspaces = await workspaceService.getWorkspaces();
+        console.log("Fetched workspaces:", workspaces);
+
+        // If no workspaces exist, create a default one
+        if (workspaces.length === 0) {
+          console.log("No workspaces found, creating default workspace...");
+          const defaultWorkspace = await workspaceService.createWorkspace({
+            name: "My Workspace",
+            description: "Your default workspace",
+            color: "#3b82f6",
+            icon: "folder",
+          });
+          console.log("Created default workspace:", defaultWorkspace);
+          return [defaultWorkspace];
+        }
+
+        return workspaces;
       } catch (error: any) {
-        console.warn("Using mock data due to Appwrite error:", error.message);
-        return mockWorkspaces;
+        console.error("Failed to fetch workspaces:", error);
+        // Provide more detailed error information
+        if (error.code) {
+          throw new Error(`Appwrite Error ${error.code}: ${error.message}`);
+        }
+        throw new Error(
+          `Failed to load workspaces: ${error.message || "Unknown error"}`
+        );
       }
     },
     staleTime: 10 * 60 * 1000, // 10 minutes instead of 5
@@ -32,25 +49,18 @@ export const useWorkspace = (workspaceId: string) => {
     queryKey: ["workspace", workspaceId],
     queryFn: async () => {
       try {
-        // Temporarily disabled: return await workspaceService.getWorkspace(workspaceId);
-        // Using mock data until attributes are configured in Appwrite
-        console.warn("Using mock data - attributes not configured in Appwrite");
-        const mockWorkspace = mockWorkspaces.find(
-          (ws) => ws.$id === workspaceId
-        );
-        if (!mockWorkspace) {
-          throw new Error("Workspace not found");
-        }
-        return mockWorkspace;
+        console.log("Fetching workspace:", workspaceId);
+        const workspace = await workspaceService.getWorkspace(workspaceId);
+        console.log("Fetched workspace:", workspace);
+        return workspace;
       } catch (error: any) {
-        console.warn("Using mock data due to Appwrite error:", error.message);
-        const mockWorkspace = mockWorkspaces.find(
-          (ws) => ws.$id === workspaceId
-        );
-        if (!mockWorkspace) {
-          throw new Error("Workspace not found");
+        console.error("Failed to fetch workspace:", error);
+        if (error.code) {
+          throw new Error(`Appwrite Error ${error.code}: ${error.message}`);
         }
-        return mockWorkspace;
+        throw new Error(
+          `Failed to load workspace: ${error.message || "Unknown error"}`
+        );
       }
     },
     enabled: !!workspaceId,
@@ -68,25 +78,22 @@ export const useCreateWorkspace = () => {
     mutationFn: async (data: {
       name: string;
       description?: string;
-      isDefault?: boolean;
+      color?: string;
+      icon?: string;
     }) => {
       try {
-        // Temporarily disabled: return await workspaceService.createWorkspace(data);
-        // Simulate creating workspace with mock data
-        console.warn("Simulating workspace creation - using mock data");
-        const newWorkspace = {
-          $id: `mock-workspace-${Date.now()}`,
-          name: data.name,
-          description: data.description || "",
-          status: "active" as const,
-          isDefault: data.isDefault || false,
-          ownerId: "mock-user",
-          $createdAt: new Date().toISOString(),
-          $updatedAt: new Date().toISOString(),
-        };
-        return newWorkspace;
-      } catch (error) {
-        throw error;
+        console.log("Creating workspace:", data);
+        const workspace = await workspaceService.createWorkspace(data);
+        console.log("Created workspace:", workspace);
+        return workspace;
+      } catch (error: any) {
+        console.error("Failed to create workspace:", error);
+        if (error.code) {
+          throw new Error(`Appwrite Error ${error.code}: ${error.message}`);
+        }
+        throw new Error(
+          `Failed to create workspace: ${error.message || "Unknown error"}`
+        );
       }
     },
     onSuccess: () => {

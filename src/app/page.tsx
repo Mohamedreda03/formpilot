@@ -30,13 +30,16 @@ export default function LandingPage() {
   const router = useRouter();
   const { data: workspaces, isLoading: workspacesLoading } = useWorkspaces();
 
-  // Auto-redirect logged in users to their workspace
+  // Auto-redirect logged in users to their latest workspace
   useEffect(() => {
     if (user && !workspacesLoading && workspaces && workspaces.length > 0) {
-      // Find default workspace or use first one
-      const defaultWorkspace =
-        workspaces.find((ws) => ws.isDefault) || workspaces[0];
-      router.push(`/workspace/${defaultWorkspace.$id}`);
+      // Sort workspaces by creation date (newest first) and use the latest one
+      const latestWorkspace = [...workspaces].sort(
+        (a, b) =>
+          new Date(b.$createdAt || "").getTime() -
+          new Date(a.$createdAt || "").getTime()
+      )[0];
+      router.push(`/ws/${latestWorkspace.$id}`);
     }
   }, [user, workspaces, workspacesLoading, router]);
 

@@ -2,22 +2,24 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formService, type Form } from "@/lib/appwrite-services";
-import { mockForms } from "@/lib/mock-data";
 
 export const useForms = (workspaceId: string) => {
   return useQuery({
     queryKey: ["forms", workspaceId],
     queryFn: async () => {
       try {
-        // Temporarily disabled: return await formService.getForms(workspaceId);
-        // Using mock data until ownerId attribute is added to Appwrite
-        console.warn(
-          "Using mock data - ownerId attribute not configured in Appwrite"
-        );
-        return mockForms.filter((form) => form.workspaceId === workspaceId);
+        console.log("Fetching forms for workspace:", workspaceId);
+        const forms = await formService.getForms(workspaceId);
+        console.log("Fetched forms:", forms);
+        return forms;
       } catch (error: any) {
-        console.warn("Using mock data due to Appwrite error:", error.message);
-        return mockForms.filter((form) => form.workspaceId === workspaceId);
+        console.error("Failed to fetch forms:", error);
+        if (error.code) {
+          throw new Error(`Appwrite Error ${error.code}: ${error.message}`);
+        }
+        throw new Error(
+          `Failed to load forms: ${error.message || "Unknown error"}`
+        );
       }
     },
     enabled: !!workspaceId,
@@ -32,26 +34,25 @@ export const useCreateForm = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: {
-      name: string;
+    mutationFn: async (data: {
+      title: string;
       description?: string;
       workspaceId: string;
     }) => {
-      // Temporarily disabled: return formService.createForm(data);
-      // Simulate creating form with mock data
-      console.warn("Simulating form creation - using mock data");
-      const newForm = {
-        $id: `mock-form-${Date.now()}`,
-        name: data.name,
-        description: data.description || "",
-        workspaceId: data.workspaceId,
-        ownerId: "mock-user",
-        status: "active" as const,
-        submissions: 0,
-        $createdAt: new Date().toISOString(),
-        $updatedAt: new Date().toISOString(),
-      };
-      return Promise.resolve(newForm);
+      try {
+        console.log("Creating form:", data);
+        const form = await formService.createForm(data);
+        console.log("Created form:", form);
+        return form;
+      } catch (error: any) {
+        console.error("Failed to create form:", error);
+        if (error.code) {
+          throw new Error(`Appwrite Error ${error.code}: ${error.message}`);
+        }
+        throw new Error(
+          `Failed to create form: ${error.message || "Unknown error"}`
+        );
+      }
     },
     onSuccess: (newForm) => {
       // Invalidate forms for the specific workspace
@@ -100,5 +101,22 @@ export const useDeleteForm = () => {
       queryClient.removeQueries({ queryKey: ["form", formId] });
       queryClient.invalidateQueries({ queryKey: ["forms"] });
     },
+  });
+};
+
+// Hook لجلب عدد النماذج لكل workspace
+export const useWorkspaceFormsCount = (workspaceId: string) => {
+  return useQuery({
+    queryKey: ["forms-count", workspaceId],
+    queryFn: async () => {
+      try {
+        const forms = await formService.getForms(workspaceId);
+        return forms.length;
+      } catch (error) {
+        console.error("Failed to fetch forms count:", error);
+        return 0;
+      }
+    },
+    enabled: !!workspaceId,
   });
 };

@@ -29,11 +29,9 @@ export function useProtectedRoute(redirectTo: string = "/") {
 
 /**
  * Hook to redirect authenticated users away from auth pages
- * @param redirectTo - Where to redirect authenticated users (default: '/workspace/select')
+ * @param redirectTo - Where to redirect authenticated users (default: '/ws/select')
  */
-export function useRedirectIfAuthenticated(
-  redirectTo: string = "/workspace/select"
-) {
+export function useRedirectIfAuthenticated(redirectTo: string = "/ws/select") {
   const { user, loading } = useAuth();
   const router = useRouter();
 

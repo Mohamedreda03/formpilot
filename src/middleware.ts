@@ -4,22 +4,16 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Check if user is accessing /workspace without an ID
-  if (pathname === "/workspace") {
-    // Redirect to workspace selection page
-    return NextResponse.redirect(new URL("/workspace/select", request.url));
+  // Check if user is accessing /ws without an ID - let the page handle it
+  if (pathname === "/ws" || pathname === "/ws/") {
+    // Let the ws/page.tsx handle the logic
+    return NextResponse.next();
   }
 
-  // Handle /workspace/ with trailing slash
-  if (pathname === "/workspace/") {
-    return NextResponse.redirect(new URL("/workspace/select", request.url));
-  }
-
-  // For all workspace routes, we'll rely on client-side auth check
-  // since middleware doesn't have easy access to Appwrite session
+  // For all other workspace routes, continue normally
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/workspace", "/workspace/(.*)"],
+  matcher: ["/ws", "/ws/(.*)"],
 };

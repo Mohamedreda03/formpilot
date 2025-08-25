@@ -58,10 +58,10 @@ function WorkspaceLayoutContent({ children }: { children: React.ReactNode }) {
   }, []);
 
   // Get current workspace info from URL params
-  const workspaceId = pathname.split("/")[2]; // Gets ID from /workspace/[id]
+  const workspaceId = pathname.split("/")[2]; // Gets ID from /ws/[id]
 
-  // Handle special routes like /workspace/select
-  if (pathname === "/workspace/select") {
+  // Handle special routes like /ws/select
+  if (pathname === "/ws/select") {
     return <div className="min-h-screen">{children}</div>;
   }
 
@@ -74,13 +74,13 @@ function WorkspaceLayoutContent({ children }: { children: React.ReactNode }) {
   const currentWorkspaceName = "My Workspace"; // This would come from your data source
 
   const handleWorkspaceSelect = (workspaceId: string) => {
-    router.push(`/workspace/${workspaceId}`);
+    router.push(`/ws/${workspaceId}`);
   };
 
   // Generate breadcrumb items based on pathname
   const generateBreadcrumbs = () => {
     const paths = pathname.split("/").filter(Boolean);
-    const breadcrumbs = [{ name: "FormPilot.", href: "/workspace" }];
+    const breadcrumbs = [{ name: "FormPilot.", href: "/ws" }];
 
     if (paths.length > 1) {
       for (let i = 1; i < paths.length; i++) {
