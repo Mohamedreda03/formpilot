@@ -39,11 +39,9 @@ export default function FormsLayout({
   const handleWorkspaceSelect = (workspaceId: string) => {
     setSelectedWorkspaceId(workspaceId);
     // Navigate to workspace or update URL
-    console.log("Selected workspace:", workspaceId);
   };
 
   const handleLogout = () => {
-    console.log("Logout");
     // Implement logout logic
   };
 

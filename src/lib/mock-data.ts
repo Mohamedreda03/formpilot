@@ -1,4 +1,20 @@
 // Mock data to use when Appwrite is rate limited or has issues
+export const mockUser = {
+  $id: "mock-user",
+  email: "user@example.com",
+  name: "John Doe",
+  preferences: {},
+  registration: "2024-01-15T10:00:00Z",
+  status: true,
+  labels: [],
+  emailVerification: true,
+  phoneVerification: false,
+  mfa: false,
+  prefs: {},
+  targets: [],
+  accessedAt: "2024-01-20T14:30:00Z",
+};
+
 export const mockWorkspaces = [
   {
     $id: "mock-workspace-1",

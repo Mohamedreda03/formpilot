@@ -255,8 +255,6 @@ export function useWorkspaceData(workspaceId: string) {
 
     try {
       // في التطبيق الحقيقي سيتم إرسال طلب إلى API
-      console.log(`Updating workspace ${workspace.id} status to ${status}`);
-
       setWorkspace((prev) =>
         prev ? ({ ...prev, status } as WorkspaceData) : null
       );
@@ -269,7 +267,6 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      console.log(`Connecting form ${formId} to workspace ${workspace.id}`);
       // في التطبيق الحقيقي سيتم إرسال طلب إلى API
     } catch (err) {
       console.error("Failed to connect form:", err);
@@ -283,7 +280,6 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      console.log(`Adding ${actionType} action to workspace ${workspace.id}`);
       // في التطبيق الحقيقي سيتم إرسال طلب إلى API
 
       const newAction = { type: actionType, config };
@@ -304,9 +300,6 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      console.log(
-        `Deleting action ${actionIndex} from workspace ${workspace.id}`
-      );
       // في التطبيق الحقيقي سيتم إرسال طلب إلى API
 
       setWorkspace((prev) =>

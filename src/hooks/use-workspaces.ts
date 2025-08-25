@@ -8,20 +8,16 @@ export const useWorkspaces = () => {
     queryKey: ["workspaces"],
     queryFn: async () => {
       try {
-        console.log("Fetching workspaces...");
         const workspaces = await workspaceService.getWorkspaces();
-        console.log("Fetched workspaces:", workspaces);
 
         // If no workspaces exist, create a default one
         if (workspaces.length === 0) {
-          console.log("No workspaces found, creating default workspace...");
           const defaultWorkspace = await workspaceService.createWorkspace({
             name: "My Workspace",
             description: "Your default workspace",
             color: "#3b82f6",
             icon: "folder",
           });
-          console.log("Created default workspace:", defaultWorkspace);
           return [defaultWorkspace];
         }
 
@@ -49,9 +45,7 @@ export const useWorkspace = (workspaceId: string) => {
     queryKey: ["workspace", workspaceId],
     queryFn: async () => {
       try {
-        console.log("Fetching workspace:", workspaceId);
         const workspace = await workspaceService.getWorkspace(workspaceId);
-        console.log("Fetched workspace:", workspace);
         return workspace;
       } catch (error: any) {
         console.error("Failed to fetch workspace:", error);
@@ -82,9 +76,7 @@ export const useCreateWorkspace = () => {
       icon?: string;
     }) => {
       try {
-        console.log("Creating workspace:", data);
         const workspace = await workspaceService.createWorkspace(data);
-        console.log("Created workspace:", workspace);
         return workspace;
       } catch (error: any) {
         console.error("Failed to create workspace:", error);

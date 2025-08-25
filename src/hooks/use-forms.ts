@@ -8,9 +8,7 @@ export const useForms = (workspaceId: string) => {
     queryKey: ["forms", workspaceId],
     queryFn: async () => {
       try {
-        console.log("Fetching forms for workspace:", workspaceId);
         const forms = await formService.getForms(workspaceId);
-        console.log("Fetched forms:", forms);
         return forms;
       } catch (error: any) {
         console.error("Failed to fetch forms:", error);
@@ -40,9 +38,7 @@ export const useCreateForm = () => {
       workspaceId: string;
     }) => {
       try {
-        console.log("Creating form:", data);
         const form = await formService.createForm(data);
-        console.log("Created form:", form);
         return form;
       } catch (error: any) {
         console.error("Failed to create form:", error);

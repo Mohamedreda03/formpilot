@@ -219,14 +219,12 @@ export default function CreateFormPage() {
   };
 
   const saveForm = () => {
-    console.log("Saving form:", formData);
     // في التطبيق الحقيقي سيتم حفظ الفورم في قاعدة البيانات
     alert("Form saved successfully!");
     router.push("/wf");
   };
 
   const previewForm = () => {
-    console.log("Previewing form:", formData);
     // في التطبيق الحقيقي سيتم فتح معاينة في modal أو صفحة جديدة
     alert("Preview feature coming soon!");
   };

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { QueryProvider } from "@/providers/QueryProvider";
-import { ErrorBoundary } from "@/components/ErrorBoundary";
+import QueryProvider from "@/components/providers/QueryProvider";
 import { Toaster } from "sonner";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -33,12 +33,12 @@ export default function RootLayout({
         suppressHydrationWarning={true}
       >
         <ErrorBoundary>
-          <QueryProvider>
-            <AuthProvider>
+          <AuthProvider>
+            <QueryProvider>
               {children}
               <Toaster />
-            </AuthProvider>
-          </QueryProvider>
+            </QueryProvider>
+          </AuthProvider>
         </ErrorBoundary>
       </body>
     </html>

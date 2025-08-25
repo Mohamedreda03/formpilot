@@ -31,6 +31,10 @@ const config = {
     templates: process.env.NEXT_PUBLIC_APPWRITE_TEMPLATES_COLLECTION_ID,
     workspaces: process.env.NEXT_PUBLIC_APPWRITE_WORKSPACES_COLLECTION_ID,
     teams: process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID,
+    workspaceMembers:
+      process.env.NEXT_PUBLIC_APPWRITE_WORKSPACE_MEMBERS_COLLECTION_ID,
+    workspaceInvites:
+      process.env.NEXT_PUBLIC_APPWRITE_WORKSPACE_INVITES_COLLECTION_ID,
   },
 };
 
@@ -56,6 +60,8 @@ async function setupDatabase() {
     await createTemplatesCollection();
     await createWorkspacesCollection();
     await createTeamsCollection();
+    await createWorkspaceMembersCollection();
+    await createWorkspaceInvitesCollection();
 
     console.log("✅ Database setup completed successfully!");
     console.log("\n📝 Next steps:");
@@ -872,6 +878,339 @@ async function createTeamsCollection() {
   } catch (error) {
     if (error.code === 409) {
       console.log("👥 Teams collection already exists, skipping...");
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function createWorkspaceMembersCollection() {
+  console.log("\n👥 Creating Workspace Members collection...");
+
+  try {
+    // Create collection
+    await databases.createCollection(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "Workspace Members",
+      [
+        Permission.read(Role.any()),
+        Permission.create(Role.users()),
+        Permission.update(Role.users()),
+        Permission.delete(Role.users()),
+      ],
+      true, // documentSecurity
+      true // enabled
+    );
+
+    // Create attributes
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "workspaceId",
+      50,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "userId",
+      50,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "userEmail",
+      255,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "userName",
+      255,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "userAvatar",
+      500,
+      false // optional
+    );
+
+    await databases.createEnumAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "role",
+      ["owner", "admin", "member", "viewer"],
+      true, // required
+      null, // no default for required field
+      false // array
+    );
+
+    await databases.createEnumAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "status",
+      ["active", "removed"],
+      true, // required
+      "active", // default
+      false // array
+    );
+
+    await databases.createDatetimeAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "joinedAt",
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "invitedBy",
+      50,
+      false // optional
+    );
+
+    // Create indexes
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "workspace_id_index",
+      "key",
+      ["workspaceId"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "user_id_index",
+      "key",
+      ["userId"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "workspace_user_unique",
+      "unique",
+      ["workspaceId", "userId"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "user_email_index",
+      "key",
+      ["userEmail"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "role_index",
+      "key",
+      ["role"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceMembers,
+      "status_index",
+      "key",
+      ["status"]
+    );
+
+    console.log("✅ Workspace Members collection created successfully");
+  } catch (error) {
+    if (error.code === 409) {
+      console.log(
+        "👥 Workspace Members collection already exists, skipping..."
+      );
+    } else {
+      throw error;
+    }
+  }
+}
+
+async function createWorkspaceInvitesCollection() {
+  console.log("\n📨 Creating Workspace Invites collection...");
+
+  try {
+    // Create collection
+    await databases.createCollection(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "Workspace Invites",
+      [
+        Permission.read(Role.any()),
+        Permission.create(Role.users()),
+        Permission.update(Role.users()),
+        Permission.delete(Role.users()),
+      ],
+      true, // documentSecurity
+      true // enabled
+    );
+
+    // Create attributes
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "workspaceId",
+      50,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "workspaceName",
+      255,
+      true // required
+    );
+
+    await databases.createEmailAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "email",
+      true // required
+    );
+
+    await databases.createEnumAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "role",
+      ["admin", "member", "viewer"],
+      true, // required
+      null, // no default for required field
+      false // array
+    );
+
+    await databases.createEnumAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "status",
+      ["pending", "accepted", "cancelled", "expired"],
+      false, // optional
+      "pending", // default
+      false // array
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "invitedBy",
+      50,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "invitedByName",
+      255,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "invitedByEmail",
+      255,
+      true // required
+    );
+
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "token",
+      255,
+      true // required - unique invite token
+    );
+
+    await databases.createDatetimeAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "createdAt",
+      true // required
+    );
+
+    await databases.createDatetimeAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "expiresAt",
+      true // required
+    );
+
+    await databases.createDatetimeAttribute(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "respondedAt",
+      false // optional
+    );
+
+    // Create indexes
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "workspace_id_index",
+      "key",
+      ["workspaceId"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "email_index",
+      "key",
+      ["email"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "token_unique",
+      "unique",
+      ["token"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "status_index",
+      "key",
+      ["status"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "invited_by_index",
+      "key",
+      ["invitedBy"]
+    );
+
+    await databases.createIndex(
+      config.databaseId,
+      config.collections.workspaceInvites,
+      "expires_at_index",
+      "key",
+      ["expiresAt"]
+    );
+
+    console.log("✅ Workspace Invites collection created successfully");
+  } catch (error) {
+    if (error.code === 409) {
+      console.log(
+        "📨 Workspace Invites collection already exists, skipping..."
+      );
     } else {
       throw error;
     }

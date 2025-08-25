@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const currentUser = await account.get();
       setUser(currentUser);
     } catch (error) {
-      console.log("No active session");
+      // No active session
     } finally {
       setLoading(false);
     }
