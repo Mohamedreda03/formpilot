@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   DropdownMenuContent,
   DropdownMenuItem,
@@ -15,8 +16,7 @@ import {
   Edit2,
   Eye,
   FileText,
-  MoreHorizontal,
-  MousePointer,
+  MoreVertical,
   Settings,
   Trash2,
 } from "lucide-react";
@@ -28,27 +28,104 @@ interface GridViewProps {
   onEditForm: (formId: string) => void;
 }
 
-export default function LinearView({
+export default function GridView({
   forms,
   onViewForm,
   onEditForm,
 }: GridViewProps) {
+  const handleCardClick = (formId: string, event: React.MouseEvent) => {
+    // Prevent card click when clicking on dropdown menu
+    if ((event.target as HTMLElement).closest('[role="button"]')) {
+      return;
+    }
+    onEditForm(formId); // Navigate to form creation/edit page
+  };
+
   return (
-    <div className="space-y-3">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
       {forms.map((form) => (
-        <div
+        <Card
           key={form.$id}
-          className="group flex items-center justify-between p-4 border rounded-xl hover:bg-muted/30 hover:border-primary/20 transition-all duration-200"
+          className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20 cursor-pointer"
+          onClick={(e) => handleCardClick(form.$id, e)}
         >
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0">
-              <FileText className="h-5 w-5 text-primary" />
+          <CardHeader>
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <CardTitle className="text-base font-semibold line-clamp-1 mb-1">
+                    {form.title}
+                  </CardTitle>
+                </div>
+
+                {form.description && (
+                  <p className="text-sm text-muted-foreground line-clamp-1 leading-relaxed">
+                    {form.description}
+                  </p>
+                )}
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                    onClick={(e) => e.stopPropagation()} // Prevent card click
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onViewForm(form.$id);
+                    }}
+                  >
+                    <Eye className="mr-2 h-4 w-4" />
+                    View
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onEditForm(form.$id);
+                    }}
+                  >
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Edit
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                    <Copy className="mr-2 h-4 w-4" />
+                    Duplicate
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={(e) => e.stopPropagation()}>
+                    <Settings className="mr-2 h-4 w-4" />
+                    Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <h4 className="font-semibold text-base truncate">
-                  {form.title}
-                </h4>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="flex items-center justify-between text-xs text-muted-foreground">
+              <div className="flex items-center gap-3">
+                <Badge variant="outline" className="flex items-center gap-1">
+                  <span className="text-base">{form.submissionCount || 0}</span>
+                  <span>
+                    submission{(form.submissionCount || 0) !== 1 ? "s" : ""}
+                  </span>
+                </Badge>
                 <Badge
                   variant={form.isActive ? "default" : "secondary"}
                   className="text-xs flex-shrink-0"
@@ -56,66 +133,18 @@ export default function LinearView({
                   {form.isActive ? "Active" : "Draft"}
                 </Badge>
               </div>
-              {form.description && (
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                  {form.description}
-                </p>
-              )}
-              <div className="flex items-center gap-6 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MousePointer className="h-3 w-3" />
-                  <span>{form.submissionCount || 0} submissions</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    Updated{" "}
-                    {formatDate(
-                      form.$updatedAt || form.$createdAt,
-                      "MMM dd, yyyy"
-                    )}
-                  </span>
-                </div>
+              <div className="flex items-center gap-1">
+                <Calendar className="h-3 w-3" />
+                <span>
+                  {formatDate(
+                    form.$updatedAt || form.$createdAt,
+                    "MMM dd, yyyy"
+                  )}
+                </span>
               </div>
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onViewForm(form.$id)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEditForm(form.$id)}>
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );

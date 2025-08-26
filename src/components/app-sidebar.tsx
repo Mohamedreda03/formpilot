@@ -23,7 +23,7 @@ import {
   CreateFormButton,
   CreateWorkspaceButton,
 } from "@/components/ui/create-dialog";
-import { Plus, Search, Folders, Building } from "lucide-react";
+import { Plus, Search, Folders, Building, Loader2 } from "lucide-react";
 import { useWorkspaces } from "@/hooks/use-workspaces";
 import { useWorkspaceFormsCount } from "@/hooks/use-forms";
 
@@ -117,21 +117,31 @@ export function AppSidebar({
           </div>
 
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
-              {filteredWorkspaces.map((workspace) => (
-                <WorkspaceMenuItem
-                  key={workspace.$id}
-                  workspace={workspace}
-                  isActive={selectedWorkspaceId === workspace.$id}
-                  onSelect={() => handleWorkspaceSelect(workspace.$id || "")}
-                />
-              ))}
-            </SidebarMenu>
-
-            {filteredWorkspaces.length === 0 && searchQuery && (
-              <div className="text-center py-6 text-sm text-muted-foreground">
-                No workspaces found matching "{searchQuery}"
+            {workspacesLoading ? (
+              <div className="flex flex-col items-center justify-center py-8 space-y-3">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <>
+                <SidebarMenu className="space-y-1">
+                  {filteredWorkspaces.map((workspace) => (
+                    <WorkspaceMenuItem
+                      key={workspace.$id}
+                      workspace={workspace}
+                      isActive={selectedWorkspaceId === workspace.$id}
+                      onSelect={() =>
+                        handleWorkspaceSelect(workspace.$id || "")
+                      }
+                    />
+                  ))}
+                </SidebarMenu>
+
+                {filteredWorkspaces.length === 0 && searchQuery && (
+                  <div className="text-center py-6 text-sm text-muted-foreground">
+                    No workspaces found matching "{searchQuery}"
+                  </div>
+                )}
+              </>
             )}
           </SidebarGroupContent>
         </SidebarGroup>
@@ -140,7 +150,7 @@ export function AppSidebar({
   );
 }
 
-// مكون منفصل لعرض workspace item مع عدد النماذج
+// Separate component to display a workspace item with its forms count
 function WorkspaceMenuItem({
   workspace,
   isActive,

@@ -36,11 +36,11 @@ export const useWorkspaces = () => {
         );
       }
     },
-    enabled: !!user, // Only run if user is logged in
-    staleTime: 10 * 60 * 1000, // 10 minutes instead of 5
-    refetchOnWindowFocus: false, // Prevent excessive refetching
-    refetchOnMount: false, // Only refetch when data is stale
-    retry: 1, // Reduce retry attempts
+    enabled: !!user,
+    staleTime: 15 * 60 * 1000, // 15 minutes for workspaces (they don't change often)
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 2, // Slightly more retries for critical workspace data
   });
 };
 
@@ -62,10 +62,10 @@ export const useWorkspace = (workspaceId: string) => {
       }
     },
     enabled: !!workspaceId,
-    staleTime: 10 * 60 * 1000,
+    staleTime: 15 * 60 * 1000, // 15 minutes for individual workspace data
     refetchOnWindowFocus: false,
     refetchOnMount: false,
-    retry: 1,
+    retry: 2,
   });
 };
 

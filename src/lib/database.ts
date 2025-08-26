@@ -16,10 +16,13 @@ async function getCurrentUserId(): Promise<string> {
 }
 
 // Check if user has access to workspace (owner or member)
-async function checkWorkspaceAccess(workspaceId: string, requiredRoles?: string[]): Promise<boolean> {
+async function checkWorkspaceAccess(
+  workspaceId: string,
+  requiredRoles?: string[]
+): Promise<boolean> {
   try {
     const userId = await getCurrentUserId();
-    
+
     // First, check if user is the owner of the workspace
     const workspace = await databases.getDocument(
       DATABASE_ID,
@@ -35,7 +38,7 @@ async function checkWorkspaceAccess(workspaceId: string, requiredRoles?: string[
     const membershipQuery = [
       Query.equal("workspaceId", workspaceId),
       Query.equal("userId", userId),
-      Query.equal("status", "active")
+      Query.equal("status", "active"),
     ];
 
     if (requiredRoles && requiredRoles.length > 0) {
@@ -52,7 +55,10 @@ async function checkWorkspaceAccess(workspaceId: string, requiredRoles?: string[
   } catch (error) {
     console.error("Error checking workspace access:", error);
     // If user is not authenticated, return false instead of throwing
-    if (error instanceof Error && error.message.includes("User not authenticated")) {
+    if (
+      error instanceof Error &&
+      error.message.includes("User not authenticated")
+    ) {
       return false;
     }
     return false;
@@ -61,7 +67,6 @@ async function checkWorkspaceAccess(workspaceId: string, requiredRoles?: string[
 
 // Collection IDs from environment variables
 export const COLLECTIONS = {
-  USERS: process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID!,
   FORMS: process.env.NEXT_PUBLIC_APPWRITE_FORMS_COLLECTION_ID!,
   SUBMISSIONS: process.env.NEXT_PUBLIC_APPWRITE_SUBMISSIONS_COLLECTION_ID!,
   TEMPLATES: process.env.NEXT_PUBLIC_APPWRITE_TEMPLATES_COLLECTION_ID!,
@@ -71,75 +76,6 @@ export const COLLECTIONS = {
   WORKSPACE_INVITES:
     process.env.NEXT_PUBLIC_APPWRITE_WORKSPACE_INVITES_COLLECTION_ID!,
 } as const;
-
-// User database operations
-export const userDB = {
-  async createUser(
-    userId: string,
-    data: {
-      name: string;
-      email: string;
-      subscription?: string;
-      credits?: number;
-    }
-  ) {
-    try {
-      return await databases.createDocument(
-        DATABASE_ID,
-        COLLECTIONS.USERS,
-        userId,
-        {
-          name: data.name,
-          email: data.email,
-          subscription: data.subscription || "free",
-          credits: data.credits || 10,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        }
-      );
-    } catch (error) {
-      console.error("Error creating user document:", error);
-      throw error;
-    }
-  },
-
-  async getUser(userId: string) {
-    try {
-      return await databases.getDocument(
-        DATABASE_ID,
-        COLLECTIONS.USERS,
-        userId
-      );
-    } catch (error) {
-      console.error("Error getting user document:", error);
-      throw error;
-    }
-  },
-
-  async updateUser(
-    userId: string,
-    data: Partial<{
-      name: string;
-      subscription: string;
-      credits: number;
-    }>
-  ) {
-    try {
-      return await databases.updateDocument(
-        DATABASE_ID,
-        COLLECTIONS.USERS,
-        userId,
-        {
-          ...data,
-          updatedAt: new Date().toISOString(),
-        }
-      );
-    } catch (error) {
-      console.error("Error updating user document:", error);
-      throw error;
-    }
-  },
-};
 
 // Form database operations
 export const formDB = {
@@ -162,8 +98,6 @@ export const formDB = {
           userId: data.userId,
           isPublic: data.isPublic || false,
           submissionCount: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
         }
       );
     } catch (error) {
@@ -209,7 +143,6 @@ export const formDB = {
     try {
       const updateData: any = {
         ...data,
-        updatedAt: new Date().toISOString(),
       };
 
       if (data.fields) {
@@ -349,7 +282,9 @@ export const workspaceMemberDB = {
       // Check if current user has access to this workspace
       const hasAccess = await checkWorkspaceAccess(workspaceId);
       if (!hasAccess) {
-        throw new Error("Access denied: You are not a member of this workspace");
+        throw new Error(
+          "Access denied: You are not a member of this workspace"
+        );
       }
 
       // Get all members of the workspace
@@ -411,13 +346,15 @@ export const workspaceMemberDB = {
   async getUserRole(workspaceId: string, userId: string) {
     try {
       const currentUserId = await getCurrentUserId();
-      
+
       // Users can only check their own role OR if they have access to the workspace
       if (currentUserId !== userId) {
         // Check if current user has access to this workspace
         const hasAccess = await checkWorkspaceAccess(workspaceId);
         if (!hasAccess) {
-          throw new Error("Access denied: You are not a member of this workspace");
+          throw new Error(
+            "Access denied: You are not a member of this workspace"
+          );
         }
       }
 
@@ -438,7 +375,7 @@ export const workspaceMemberDB = {
           userName: "", // Will be filled by the component if needed
           role: "owner",
           joinedAt: workspace.$createdAt,
-          status: "active"
+          status: "active",
         };
       }
 
@@ -481,7 +418,6 @@ export const workspaceInviteDB = {
           role: data.role,
           status: "pending",
           invitedBy: data.invitedBy,
-          createdAt: new Date().toISOString(),
           expiresAt: data.expiresAt,
           token: data.token,
         }
@@ -497,7 +433,9 @@ export const workspaceInviteDB = {
       // Check if current user has access to this workspace
       const hasAccess = await checkWorkspaceAccess(workspaceId);
       if (!hasAccess) {
-        throw new Error("Access denied: You are not a member of this workspace");
+        throw new Error(
+          "Access denied: You are not a member of this workspace"
+        );
       }
 
       return await databases.listDocuments(

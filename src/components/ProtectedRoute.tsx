@@ -8,7 +8,6 @@ interface ProtectedRouteProps {
   children: ReactNode;
   fallback?: ReactNode;
   redirectTo?: string;
-  loadingMessage?: string;
 }
 
 /**
@@ -19,7 +18,6 @@ export function ProtectedRoute({
   children,
   fallback,
   redirectTo = "/",
-  loadingMessage = "Checking authentication...",
 }: ProtectedRouteProps) {
   const { user, loading } = useProtectedRoute(redirectTo);
 
@@ -30,7 +28,6 @@ export function ProtectedRoute({
         <div className="min-h-screen flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-muted-foreground">{loadingMessage}</p>
           </div>
         </div>
       )

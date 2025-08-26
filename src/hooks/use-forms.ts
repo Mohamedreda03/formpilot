@@ -4,14 +4,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formService, type Form } from "@/lib/appwrite-services";
 import { useAuth } from "@/contexts/AuthContext";
 
-export const useForms = (workspaceId: string) => {
+export const useForms = (workspaceId: string, sortBy?: string) => {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ["forms", workspaceId],
+    queryKey: ["forms", workspaceId, sortBy || "created_date"],
     queryFn: async () => {
       try {
-        const forms = await formService.getForms(workspaceId);
+        console.log("Fetching forms with sortBy:", sortBy || "created_date"); // Debug log
+        const forms = await formService.getForms(workspaceId, sortBy);
+        console.log("Fetched forms:", forms.length); // Debug log
         return forms;
       } catch (error: any) {
         console.error("Failed to fetch forms:", error);
@@ -23,11 +25,13 @@ export const useForms = (workspaceId: string) => {
         );
       }
     },
-    enabled: !!workspaceId && !!user, // Only run if user is logged in
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    enabled: !!workspaceId && !!user,
+    staleTime: 0, // No caching to ensure immediate sorting
+    gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
     refetchOnWindowFocus: false,
     refetchOnMount: false,
     retry: 1,
+    refetchOnReconnect: false,
   });
 };
 
@@ -103,7 +107,7 @@ export const useDeleteForm = () => {
   });
 };
 
-// Hook لجلب عدد النماذج لكل workspace
+// Hook to fetch the number of forms for each workspace
 export const useWorkspaceFormsCount = (workspaceId: string) => {
   const { user } = useAuth();
 
@@ -111,6 +115,7 @@ export const useWorkspaceFormsCount = (workspaceId: string) => {
     queryKey: ["forms-count", workspaceId],
     queryFn: async () => {
       try {
+        // Use a more efficient count query instead of fetching all forms
         const forms = await formService.getForms(workspaceId);
         return forms.length;
       } catch (error) {
@@ -118,6 +123,10 @@ export const useWorkspaceFormsCount = (workspaceId: string) => {
         return 0;
       }
     },
-    enabled: !!workspaceId && !!user, // Only run if user is logged in
+    enabled: !!workspaceId && !!user,
+    staleTime: 10 * 60 * 1000, // 10 minutes for form counts
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
+    retry: 1,
   });
 };

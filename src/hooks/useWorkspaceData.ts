@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 
-// Mock data - في التطبيق الحقيقي سيأتي من قاعدة البيانات
+// Mock data - in a real app this would come from the database
 const workspacesData = {
   wf_1: {
     id: "wf_1",
@@ -254,7 +254,7 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      // في التطبيق الحقيقي سيتم إرسال طلب إلى API
+      // In a real app this would send a request to the API
       setWorkspace((prev) =>
         prev ? ({ ...prev, status } as WorkspaceData) : null
       );
@@ -267,7 +267,7 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      // في التطبيق الحقيقي سيتم إرسال طلب إلى API
+      // In a real app this would send a request to the API
     } catch (err) {
       console.error("Failed to connect form:", err);
     }
@@ -280,7 +280,7 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      // في التطبيق الحقيقي سيتم إرسال طلب إلى API
+      // In a real app this would send a request to the API
 
       const newAction = { type: actionType, config };
       setWorkspace((prev) =>
@@ -300,7 +300,7 @@ export function useWorkspaceData(workspaceId: string) {
     if (!workspace) return;
 
     try {
-      // في التطبيق الحقيقي سيتم إرسال طلب إلى API
+      // In a real app this would send a request to the API
 
       setWorkspace((prev) =>
         prev

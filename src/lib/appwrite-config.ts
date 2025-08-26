@@ -32,8 +32,6 @@ export const COLLECTIONS = {
   WORKSPACE_INVITES:
     process.env.NEXT_PUBLIC_APPWRITE_WORKSPACE_INVITES_COLLECTION_ID ||
     "workspace_invites",
-  USERS: process.env.NEXT_PUBLIC_APPWRITE_USERS_COLLECTION_ID || "users",
-  TEAMS: process.env.NEXT_PUBLIC_APPWRITE_TEAMS_COLLECTION_ID || "teams",
 } as const;
 
 // Storage Buckets

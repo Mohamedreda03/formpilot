@@ -31,7 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { LogOut, User, Settings } from "lucide-react";
+import { LogOut, User, Settings, Loader2 } from "lucide-react";
 
 export default function WorkspaceLayout({
   children,
@@ -39,7 +39,7 @@ export default function WorkspaceLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ProtectedRoute loadingMessage="Loading workspace...">
+    <ProtectedRoute>
       <WorkspaceLayoutContent>{children}</WorkspaceLayoutContent>
     </ProtectedRoute>
   );
@@ -48,9 +48,7 @@ export default function WorkspaceLayout({
 function WorkspaceLayoutContent({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
   const pathname = usePathname();
-  const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
 
   // Fix hydration issue
   useEffect(() => {
@@ -99,10 +97,7 @@ function WorkspaceLayoutContent({ children }: { children: React.ReactNode }) {
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading workspace...</p>
-        </div>
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }

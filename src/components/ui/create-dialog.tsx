@@ -139,7 +139,7 @@ export function CreateDialog({
   );
 }
 
-// مكون مخصص لإنشاء مساحة العمل
+// Component for creating a new workspace
 export function CreateWorkspaceDialog({
   trigger,
   isLoading,
@@ -174,7 +174,7 @@ export function CreateWorkspaceDialog({
   );
 }
 
-// مكون مخصص لإنشاء النموذج
+// Component for creating a new form
 export function CreateFormDialog({
   trigger,
   isLoading,
@@ -209,7 +209,7 @@ export function CreateFormDialog({
   );
 }
 
-// مكون مخصص لزر إنشاء النموذج يمكن استخدامه في أي مكان
+// Reusable component: Create Form button that can be used anywhere
 export function CreateFormButton({
   workspaceId,
   workspaceName,
@@ -276,7 +276,7 @@ export function CreateFormButton({
   );
 }
 
-// مكون مخصص لزر إنشاء مساحة العمل يمكن استخدامه في أي مكان
+// Reusable component: Create Workspace button that can be used anywhere
 export function CreateWorkspaceButton({
   variant = "default",
   size = "default",

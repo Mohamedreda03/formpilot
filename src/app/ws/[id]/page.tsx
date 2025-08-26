@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useAuth } from "@/contexts/AuthContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -15,13 +13,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import TeamManagement from "@/components/team/TeamManagement";
 import {
   Grid3X3,
@@ -29,23 +20,13 @@ import {
   Edit2,
   Check,
   X,
-  Calendar,
   Clock,
   ArrowUpDown,
   Loader2,
   AlertTriangle,
-  RefreshCw,
   Plus,
-  FileText,
-  MousePointer,
-  Eye,
-  MoreHorizontal,
-  Copy,
-  Settings,
-  Trash2,
   SortDesc,
   Type,
-  MoreVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useForms } from "@/hooks/use-forms";
@@ -54,89 +35,14 @@ import CreateFormButton from "@/components/CreateFormButton";
 import { Separator } from "@/components/ui/separator";
 import WorkspaceLoadingState from "../components/workspace-loading";
 import WorkspaceErrorState from "../components/workspace-error";
-import GridView from "../components/grid-view";
-import LinearView from "../components/grid-view";
+import FormsList from "../components/forms-list";
+import PartialWorkspaceLoading from "../components/partial-workspace-loading";
 
-// Empty Forms State
-function EmptyFormsState({
-  workspaceId,
-  workspaceName,
-}: {
-  workspaceId: string;
-  workspaceName: string;
-}) {
-  return (
-    <div className="text-center py-12">
-      <div className="mx-auto w-24 h-24 bg-muted rounded-full flex items-center justify-center mb-4">
-        <FileText className="h-8 w-8 text-muted-foreground" />
-      </div>
-      <h3 className="text-lg font-medium mb-2">No forms yet</h3>
-      <p className="text-muted-foreground mb-6">
-        Create your first form to start collecting submissions and data.
-      </p>
-      <CreateFormButton
-        workspaceId={workspaceId}
-        workspaceName={workspaceName}
-        className="gap-2"
-      >
-        <Plus className="h-4 w-4" />
-        Create First Form
-      </CreateFormButton>
-    </div>
-  );
-}
-
-// Forms List Component
-function FormsList({
-  forms,
-  viewMode,
-  onEditForm,
-  onViewForm,
-  workspaceId,
-  workspaceName,
-}: {
-  forms: any[];
-  viewMode: "grid" | "list";
-  onEditForm: (formId: string) => void;
-  onViewForm: (formId: string) => void;
-  workspaceId: string;
-  workspaceName: string;
-}) {
-  if (forms.length === 0) {
-    return (
-      <EmptyFormsState
-        workspaceId={workspaceId}
-        workspaceName={workspaceName}
-      />
-    );
-  }
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
-  };
-
-  if (viewMode === "grid") {
-    return (
-      <GridView forms={forms} onViewForm={onViewForm} onEditForm={onEditForm} />
-    );
-  }
-
-  return (
-    <LinearView forms={forms} onViewForm={onViewForm} onEditForm={onEditForm} />
-  );
-}
-
-// Main Workspace Page Component
 export default function WorkspacePage() {
   const params = useParams();
   const router = useRouter();
   const workspaceId = params.id as string;
 
-  // Local state
   const [mounted, setMounted] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("");
   const [isEditingName, setIsEditingName] = useState(false);
@@ -144,12 +50,11 @@ export default function WorkspacePage() {
   const [sortBy, setSortBy] = useState("created_date");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
-  // User role in workspace - في التطبيق الحقيقي سيأتي من API
-  const [currentUserRole, setCurrentUserRole] = useState<
-    "owner" | "admin" | "member" | "viewer"
-  >("owner");
+  // Debug log for sortBy changes
+  useEffect(() => {
+    console.log("sortBy changed to:", sortBy);
+  }, [sortBy]);
 
-  // React Query hooks
   const {
     data: workspace,
     isLoading: workspaceLoading,
@@ -162,16 +67,18 @@ export default function WorkspacePage() {
     isLoading: formsLoading,
     error: formsError,
     refetch: refetchForms,
-  } = useForms(workspaceId);
+    isFetching: isFormsFetching,
+  } = useForms(workspaceId, sortBy);
 
   const updateWorkspaceMutation = useUpdateWorkspace();
 
-  // Prevent hydration issues
+  // Track sorting state for better UX - more precise detection
+  const isSorting = isFormsFetching && !formsLoading && forms.length > 0;
+
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Update workspace name when data loads
   useEffect(() => {
     if (workspace) {
       setWorkspaceName(workspace.name);
@@ -179,7 +86,6 @@ export default function WorkspacePage() {
     }
   }, [workspace]);
 
-  // Show loading during hydration
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -191,12 +97,12 @@ export default function WorkspacePage() {
     );
   }
 
-  // Loading state
-  if (workspaceLoading || formsLoading) {
-    return <WorkspaceLoadingState />;
+  if (workspaceLoading) {
+    return (
+      <PartialWorkspaceLoading viewMode={viewMode} setViewMode={setViewMode} />
+    );
   }
 
-  // Error state
   if (workspaceError) {
     return (
       <WorkspaceErrorState
@@ -206,7 +112,6 @@ export default function WorkspacePage() {
     );
   }
 
-  // Workspace not found
   if (!workspace) {
     return (
       <div className="text-center py-12">
@@ -250,42 +155,15 @@ export default function WorkspacePage() {
   };
 
   const handleEditForm = (formId: string) => {
-    router.push(`/ws/${workspaceId}/form/${formId}/edit`);
+    router.push(`/form/${formId}`);
   };
 
   const handleViewForm = (formId: string) => {
-    router.push(`/ws/${workspaceId}/form/${formId}`);
+    router.push(`/form/${formId}/view`);
   };
-
-  // Sort forms
-  const sortedForms = [...forms].sort((a, b) => {
-    switch (sortBy) {
-      case "created_date":
-        return (
-          new Date(b.$createdAt || "").getTime() -
-          new Date(a.$createdAt || "").getTime()
-        );
-      case "modified_date":
-        return (
-          new Date(b.$updatedAt || "").getTime() -
-          new Date(a.$updatedAt || "").getTime()
-        );
-      case "alphabetical":
-        return a.title.localeCompare(b.title);
-      default:
-        return 0;
-    }
-  });
-
-  // Calculate stats
-  const totalSubmissions = forms.reduce(
-    (total: number, form: any) => total + (form.submissionCount || 0),
-    0
-  );
 
   return (
     <div className="space-y-6">
-      {/* Page Header */}
       <div className="flex items-center justify-between">
         <div className="space-y-1">
           {isEditingName ? (
@@ -329,7 +207,6 @@ export default function WorkspacePage() {
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Team Management */}
           <TeamManagement
             workspaceId={workspaceId}
             workspaceName={workspaceName}
@@ -348,7 +225,6 @@ export default function WorkspacePage() {
 
       <Separator />
 
-      {/* Forms Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
@@ -359,9 +235,18 @@ export default function WorkspacePage() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-40">
-                <SelectValue />
+            <Select
+              value={sortBy}
+              onValueChange={(newValue) => {
+                console.log("Select onValueChange:", newValue);
+                setSortBy(newValue);
+              }}
+            >
+              <SelectTrigger className="w-48 h-10 border-2">
+                <div className="flex items-center gap-2">
+                  {isSorting && <Loader2 className="h-3 w-3 animate-spin" />}
+                  <SelectValue />
+                </div>
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="created_date">
@@ -389,6 +274,7 @@ export default function WorkspacePage() {
               variant={viewMode === "grid" ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode("grid")}
+              className="h-10 w-10 p-0"
             >
               <Grid3X3 className="h-4 w-4" />
             </Button>
@@ -396,6 +282,7 @@ export default function WorkspacePage() {
               variant={viewMode === "list" ? "default" : "outline"}
               size="sm"
               onClick={() => setViewMode("list")}
+              className="h-10 w-10 p-0"
             >
               <List className="h-4 w-4" />
             </Button>
@@ -419,12 +306,14 @@ export default function WorkspacePage() {
           </Alert>
         ) : (
           <FormsList
-            forms={sortedForms}
+            forms={forms}
             viewMode={viewMode}
             onEditForm={handleEditForm}
             onViewForm={handleViewForm}
             workspaceId={workspaceId}
             workspaceName={workspaceName}
+            isLoading={formsLoading}
+            isSorting={isSorting}
           />
         )}
       </div>

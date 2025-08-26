@@ -13,7 +13,7 @@ const databases = new Databases(client);
 
 // Email transporter setup
 const transporter = nodemailer.createTransport({
-  service: "gmail", // أو أي service آخر تريده
+  service: "gmail", // or another email service of your choice
   auth: {
     user: process.env.EMAIL_USER!,
     pass: process.env.EMAIL_PASSWORD!,
@@ -96,9 +96,8 @@ export async function POST(request: NextRequest) {
         status: "pending",
         invitedBy,
         invitedByName: invitedByName || "Someone",
-        invitedByEmail: "", // يمكن إضافتها لاحقاً
+        invitedByEmail: "", // can be added later
         token: inviteToken,
-        createdAt: new Date().toISOString(),
         expiresAt: expiresAt.toISOString(),
         respondedAt: null,
       }
