@@ -3,7 +3,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,11 +22,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import TeamManagement from "@/components/team/TeamManagement";
 import {
-  Folders,
   Grid3X3,
   List,
   Edit2,
@@ -48,97 +44,18 @@ import {
   Settings,
   Trash2,
   SortDesc,
-  SortAsc,
   Type,
   MoreVertical,
-  UserPlus,
-  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useForms } from "@/hooks/use-forms";
 import { useWorkspace, useUpdateWorkspace } from "@/hooks/use-workspaces";
 import CreateFormButton from "@/components/CreateFormButton";
 import { Separator } from "@/components/ui/separator";
-
-// Loading Component
-function WorkspaceLoadingState() {
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div className="space-y-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-32" />
-        </div>
-        <Skeleton className="h-10 w-32" />
-      </div>
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-6 w-16" />
-            <Skeleton className="h-6 w-20" />
-          </div>
-          <div className="flex items-center gap-2">
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-9 w-10" />
-            <Skeleton className="h-9 w-10" />
-          </div>
-        </div>
-
-        {/* Grid Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Card key={i} className="border-2">
-              <CardHeader className="pb-4">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Skeleton className="h-8 w-8 rounded-lg" />
-                      <Skeleton className="h-5 w-16 rounded-full" />
-                    </div>
-                    <Skeleton className="h-5 w-32 mb-1" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-3/4" />
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <div className="flex items-center justify-between">
-                  <Skeleton className="h-3 w-12" />
-                  <Skeleton className="h-3 w-16" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// Error Component
-function WorkspaceErrorState({
-  error,
-  onRetry,
-}: {
-  error: string;
-  onRetry: () => void;
-}) {
-  return (
-    <div className="space-y-6">
-      <Alert>
-        <AlertTriangle className="h-4 w-4" />
-        <AlertDescription className="flex items-center justify-between">
-          <span>{error}</span>
-          <Button size="sm" onClick={onRetry} className="ml-4">
-            <RefreshCw className="h-4 w-4 mr-2" />
-            Try Again
-          </Button>
-        </AlertDescription>
-      </Alert>
-    </div>
-  );
-}
+import WorkspaceLoadingState from "../components/workspace-loading";
+import WorkspaceErrorState from "../components/workspace-error";
+import GridView from "../components/grid-view";
+import LinearView from "../components/grid-view";
 
 // Empty Forms State
 function EmptyFormsState({
@@ -204,174 +121,12 @@ function FormsList({
 
   if (viewMode === "grid") {
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {forms.map((form) => (
-          <Card
-            key={form.$id}
-            className="group hover:shadow-lg transition-all duration-200 border-2 hover:border-primary/20"
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                      <FileText className="h-4 w-4 text-primary" />
-                    </div>
-                    <CardTitle className="text-base font-semibold line-clamp-1 mb-1">
-                      {form.title}
-                    </CardTitle>
-                  </div>
-
-                  {form.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                      {form.description}
-                    </p>
-                  )}
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onViewForm(form.$id)}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onEditForm(form.$id)}>
-                      <Edit2 className="mr-2 h-4 w-4" />
-                      Edit
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Settings
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <div className="flex items-center gap-3">
-                  <Badge variant="outline" className="flex items-center gap-1">
-                    <span className="text-base">
-                      {form.submissionCount || 0}
-                    </span>
-                    <span>
-                      submission{(form.submissionCount || 0) !== 1 ? "s" : ""}
-                    </span>
-                  </Badge>
-                  <Badge
-                    variant={form.isActive ? "default" : "secondary"}
-                    className="text-xs flex-shrink-0"
-                  >
-                    {form.isActive ? "Active" : "Draft"}
-                  </Badge>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>{formatDate(form.$updatedAt || form.$createdAt)}</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+      <GridView forms={forms} onViewForm={onViewForm} onEditForm={onEditForm} />
     );
   }
 
-  // List view - بدون Card wrapper
   return (
-    <div className="space-y-3">
-      {forms.map((form) => (
-        <div
-          key={form.$id}
-          className="group flex items-center justify-between p-4 border rounded-xl hover:bg-muted/30 hover:border-primary/20 transition-all duration-200"
-        >
-          <div className="flex items-center space-x-4 flex-1 min-w-0">
-            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/10 to-primary/5 flex-shrink-0">
-              <FileText className="h-5 w-5 text-primary" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-3 mb-1">
-                <h4 className="font-semibold text-base truncate">
-                  {form.title}
-                </h4>
-                <Badge
-                  variant={form.isActive ? "default" : "secondary"}
-                  className="text-xs flex-shrink-0"
-                >
-                  {form.isActive ? "Active" : "Draft"}
-                </Badge>
-              </div>
-              {form.description && (
-                <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                  {form.description}
-                </p>
-              )}
-              <div className="flex items-center gap-6 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <MousePointer className="h-3 w-3" />
-                  <span>{form.submissionCount || 0} submissions</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <Calendar className="h-3 w-3" />
-                  <span>
-                    Updated {formatDate(form.$updatedAt || form.$createdAt)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onViewForm(form.$id)}>
-                  <Eye className="mr-2 h-4 w-4" />
-                  View
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => onEditForm(form.$id)}>
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Copy className="mr-2 h-4 w-4" />
-                  Duplicate
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Settings className="mr-2 h-4 w-4" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      ))}
-    </div>
+    <LinearView forms={forms} onViewForm={onViewForm} onEditForm={onEditForm} />
   );
 }
 
@@ -379,7 +134,6 @@ function FormsList({
 export default function WorkspacePage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
   const workspaceId = params.id as string;
 
   // Local state
