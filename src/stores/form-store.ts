@@ -81,6 +81,9 @@ export const useFormStore = create<FormStore>()(
         loadForm: async (formId) => {
           set({ isLoading: true, error: null });
           try {
+            // Add a small delay to simulate API call but prevent race conditions
+            await new Promise((resolve) => setTimeout(resolve, 100));
+
             const mockForm: Form = {
               id: formId,
               title: "Sample Form",
@@ -122,12 +125,15 @@ export const useFormStore = create<FormStore>()(
               outroButtonText: "Submit",
             };
 
-            set({ form: mockForm, isLoading: false });
+            // Set form and clear loading/error states
+            set({ form: mockForm, isLoading: false, error: null });
           } catch (error) {
+            console.error("Error loading form:", error);
             set({
               error:
                 error instanceof Error ? error.message : "Failed to load form",
               isLoading: false,
+              form: null,
             });
           }
         },

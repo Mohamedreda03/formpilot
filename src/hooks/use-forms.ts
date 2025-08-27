@@ -26,12 +26,12 @@ export const useForms = (workspaceId: string, sortBy?: string) => {
       }
     },
     enabled: !!workspaceId && !!user,
-    staleTime: 0, // No caching to ensure immediate sorting
+    staleTime: 1 * 60 * 1000, // 1 minute - balance between freshness and performance
     gcTime: 5 * 60 * 1000, // Keep in memory for 5 minutes
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-    retry: 1,
-    refetchOnReconnect: false,
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+    refetchOnMount: true, // Always refetch on mount
+    retry: 2, // Retry failed requests twice
+    refetchOnReconnect: true, // Refetch when connection is restored
   });
 };
 
@@ -58,10 +58,21 @@ export const useCreateForm = () => {
       }
     },
     onSuccess: (newForm) => {
-      // Invalidate forms for the specific workspace
+      // Invalidate and refetch forms for the specific workspace
       queryClient.invalidateQueries({
         queryKey: ["forms", newForm.workspaceId],
       });
+
+      // Also invalidate forms count
+      queryClient.invalidateQueries({
+        queryKey: ["forms-count", newForm.workspaceId],
+      });
+
+      // Optionally set the new form in cache for immediate access
+      queryClient.setQueryData(["form", newForm.$id], newForm);
+    },
+    onError: (error) => {
+      console.error("Create form mutation error:", error);
     },
   });
 };

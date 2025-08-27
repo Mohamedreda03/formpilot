@@ -48,7 +48,7 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
     <div className="min-h-screen bg-background">
       {/* Enhanced Header with Navigation */}
       <header className="relative bg-white border-b border-gray-200">
-        <div className="px-6 py-4">
+        <div className="px-6 py-2">
           <div className="flex items-center justify-between">
             {/* Left Section: Back Button + Title */}
             <div className="flex items-center space-x-4">
@@ -75,13 +75,13 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
             <div className="relative flex items-center space-x-1">
               {/* Smooth sliding indicator line */}
               <div
-                className="absolute h-0.5 bg-slate-700 rounded-full transition-all duration-300 ease-in-out"
+                className="absolute h-1 bg-slate-700 rounded-b-full transition-all duration-300 ease-in-out"
                 style={{
-                  top: "-16px",
-                  width: `calc(${100 / navigationTabs.length}% - 4px)`,
+                  top: "-12px",
+                  width: `calc(${100 / navigationTabs.length}% - 2px)`,
                   left: `calc(${
                     activeTabIndex * (100 / navigationTabs.length)
-                  }% + 2px)`,
+                  }% + 0.5px)`,
                   transform: "translateX(0)",
                 }}
               />

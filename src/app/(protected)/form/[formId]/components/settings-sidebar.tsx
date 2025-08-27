@@ -27,8 +27,8 @@ export default function SettingsSidebar() {
 
   if (!form) {
     return (
-      <div className="w-80 bg-gray-50 border-l border-gray-200 p-6">
-        <p className="text-gray-500 text-center">No form loaded</p>
+      <div className="w-72 bg-gray-50 border-l border-gray-200 p-4 overflow-hidden">
+        <p className="text-gray-500 text-center text-sm">No form loaded</p>
       </div>
     );
   }
@@ -102,14 +102,14 @@ export default function SettingsSidebar() {
     const currentTypeConfig = getQuestionTypeConfig(selectedQuestion.type);
 
     return (
-      <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
+      <div className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="p-3 border-b border-gray-100 bg-gray-50">
           <h3 className="font-semibold text-gray-900 text-sm">
             Question Settings
           </h3>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
           {/* Question Type Selector */}
           <div className="space-y-2">
             <Label className="text-sm font-medium text-gray-700">
@@ -309,26 +309,40 @@ export default function SettingsSidebar() {
     );
   }
 
-  // Page Settings (Intro/Outro)
+  // Page Settings
   if (selectedPage) {
-    const pageTitle =
-      selectedPage === "intro" ? "Welcome Page" : "Thank You Page";
-    const titleValue =
-      selectedPage === "intro" ? form.introTitle : form.outroTitle;
-    const descriptionValue =
-      selectedPage === "intro" ? form.introDescription : form.outroDescription;
-    const buttonValue =
-      selectedPage === "intro" ? form.introButtonText : form.outroButtonText;
+    const isIntroPage = selectedPage === "intro";
+    const pageTitle = isIntroPage
+      ? "Welcome Page Settings"
+      : "Thank You Page Settings";
+
+    const titleValue = isIntroPage ? form.introTitle : form.outroTitle;
+    const descriptionValue = isIntroPage
+      ? form.introDescription
+      : form.outroDescription;
+    const buttonValue = isIntroPage
+      ? form.introButtonText
+      : form.outroButtonText;
+
+    const handlePageUpdate = (field: string, value: string) => {
+      if (isIntroPage) {
+        updateForm({
+          [`intro${field}`]: value,
+        });
+      } else {
+        updateForm({
+          [`outro${field}`]: value,
+        });
+      }
+    };
 
     return (
-      <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
-        <div className="p-4 border-b border-gray-100 bg-gray-50">
-          <h3 className="font-semibold text-gray-900 text-sm">
-            {pageTitle} Settings
-          </h3>
+      <div className="w-72 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="p-3 border-b border-gray-100 bg-gray-50">
+          <h3 className="font-semibold text-gray-900 text-sm">{pageTitle}</h3>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 space-y-4">
           {/* Page Title */}
           <div className="space-y-2">
             <Label
@@ -384,8 +398,8 @@ export default function SettingsSidebar() {
 
   // Default state - no selection
   return (
-    <div className="w-80 bg-white border-l border-gray-200 flex items-center justify-center">
-      <div className="text-center space-y-2 p-6">
+    <div className="w-72 bg-white border-l border-gray-200 flex items-center justify-center overflow-hidden">
+      <div className="text-center space-y-2 p-4">
         <p className="text-gray-500 text-sm">
           Select a question or page to edit its settings
         </p>

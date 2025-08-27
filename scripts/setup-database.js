@@ -298,6 +298,16 @@ async function createFormsCollection() {
     );
     await delay(500);
 
+    console.log("📝 Adding design attribute...");
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.forms,
+      "design",
+      65535, // Large text for JSON design data
+      false // optional
+    );
+    await delay(500);
+
     await databases.createStringAttribute(
       config.databaseId,
       config.collections.forms,

@@ -43,6 +43,7 @@ export interface FormData {
   submissionCount?: number;
   slug?: string;
   settings?: any;
+  design?: string;
   $createdAt?: string;
   $updatedAt?: string;
 }
@@ -144,6 +145,7 @@ export class FormsService {
     if (data.slug !== undefined) updateData.slug = data.slug;
     if (data.settings !== undefined)
       updateData.settings = JSON.stringify(data.settings);
+    if (data.design !== undefined) updateData.design = data.design;
 
     const response = await databases.updateDocument(
       DATABASE_ID,
@@ -301,6 +303,7 @@ export class FormsService {
       submissionCount: doc.submissionCount || 0,
       slug: doc.slug,
       settings: doc.settings ? JSON.parse(doc.settings) : {},
+      design: doc.design,
       $createdAt: doc.$createdAt,
       $updatedAt: doc.$updatedAt,
     };

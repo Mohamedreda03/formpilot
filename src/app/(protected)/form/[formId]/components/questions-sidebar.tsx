@@ -321,11 +321,11 @@ export default function QuestionsSidebar({
     : null;
 
   return (
-    <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
+    <div className="w-72 bg-white border-r border-gray-200 flex flex-col h-full overflow-hidden">
       {/* Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Intro Page */}
-        <div className="p-4 border-b border-gray-100">
+        <div className="p-3 border-b border-gray-100">
           <div>
             <PageItem
               type="intro"
@@ -339,7 +339,7 @@ export default function QuestionsSidebar({
 
         {/* Questions Section */}
         <div className="flex-1 flex flex-col min-h-0">
-          <div className="p-4 pb-2 flex items-center justify-between">
+          <div className="p-3 pb-2 flex items-center justify-between">
             <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Questions ({questions.length})
             </h4>
@@ -353,7 +353,7 @@ export default function QuestionsSidebar({
           </div>
 
           {/* Scrollable Questions with Drag & Drop */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-3 pb-3 pt-2 custom-scrollbar">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
@@ -373,7 +373,6 @@ export default function QuestionsSidebar({
                       onQuestionSelect={onQuestionSelect}
                       onQuestionDuplicate={onQuestionDuplicate}
                       onQuestionDelete={onQuestionDelete}
-                      isDragging={activeId === question.id}
                     />
                   ))}
                 </div>
@@ -385,18 +384,11 @@ export default function QuestionsSidebar({
                 ) : null}
               </DragOverlay>
             </DndContext>
-
-            {questions.length === 0 && (
-              <div className="text-center py-8 text-gray-400">
-                <p className="text-sm">No questions yet</p>
-                <p className="text-xs mt-1">Click + to add a question</p>
-              </div>
-            )}
           </div>
         </div>
 
-        {/* Outro Page at Bottom */}
-        <div className="p-4 border-t border-gray-100 bg-gray-50">
+        {/* Outro Page */}
+        <div className="p-3 border-t border-gray-100">
           <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
             Thank You
           </h4>

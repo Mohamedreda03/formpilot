@@ -110,7 +110,7 @@ export const formDB = {
     try {
       return await databases.listDocuments(DATABASE_ID, COLLECTIONS.FORMS, [
         Query.equal("userId", userId),
-        Query.orderDesc("createdAt"),
+        Query.orderDesc("$createdAt"),
       ]);
     } catch (error) {
       console.error("Error getting user forms:", error);
@@ -221,7 +221,7 @@ export const templateDB = {
   async getTemplates() {
     try {
       return await databases.listDocuments(DATABASE_ID, COLLECTIONS.TEMPLATES, [
-        Query.orderDesc("createdAt"),
+        Query.orderDesc("$createdAt"),
       ]);
     } catch (error) {
       console.error("Error getting templates:", error);
@@ -444,7 +444,7 @@ export const workspaceInviteDB = {
         [
           Query.equal("workspaceId", workspaceId),
           Query.equal("status", "pending"),
-          Query.orderDesc("createdAt"),
+          Query.orderDesc("$createdAt"),
         ]
       );
     } catch (error) {

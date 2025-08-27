@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -16,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useCreateForm } from "@/hooks/use-forms";
 
 interface CreateFormButtonProps {
   workspaceId: string;
@@ -30,12 +32,14 @@ export default function CreateFormButton({
   className,
   children,
 }: CreateFormButtonProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     title: "",
     description: "",
   });
+
+  const createFormMutation = useCreateForm();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,22 +49,24 @@ export default function CreateFormButton({
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const newForm = await createFormMutation.mutateAsync({
+        title: formData.title.trim(),
+        description: formData.description.trim(),
+        workspaceId,
+      });
 
       toast.success("Form created successfully!");
       setFormData({ title: "", description: "" });
       setOpen(false);
 
-      // In a real app, redirect to form editor
-      // router.push(`/ws/${workspaceId}/form/${newFormId}/edit`);
+      // Redirect to form editor
+      router.push(`/form/${newForm.$id}`);
     } catch (error) {
-      toast.error("Failed to create form");
-    } finally {
-      setIsLoading(false);
+      console.error("Failed to create form:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to create form"
+      );
     }
   };
 
@@ -87,6 +93,7 @@ export default function CreateFormButton({
                 setFormData((prev) => ({ ...prev, title: e.target.value }))
               }
               autoFocus
+              disabled={createFormMutation.isPending}
             />
           </div>
           <div className="space-y-2">
@@ -102,6 +109,7 @@ export default function CreateFormButton({
                 }))
               }
               rows={3}
+              disabled={createFormMutation.isPending}
             />
           </div>
           <DialogFooter>
@@ -109,11 +117,14 @@ export default function CreateFormButton({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={createFormMutation.isPending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+            <Button type="submit" disabled={createFormMutation.isPending}>
+              {createFormMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
               Create Form
             </Button>
           </DialogFooter>

@@ -86,6 +86,18 @@ export default function WorkspacePage() {
     }
   }, [workspace]);
 
+  // Add window focus listener to refresh data when returning from form creation
+  useEffect(() => {
+    const handleFocus = () => {
+      if (workspaceId && !formsLoading) {
+        refetchForms();
+      }
+    };
+
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [workspaceId, formsLoading, refetchForms]);
+
   if (!mounted) {
     return (
       <div className="min-h-screen flex items-center justify-center">

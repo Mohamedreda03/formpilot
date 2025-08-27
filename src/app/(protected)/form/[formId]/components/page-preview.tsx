@@ -34,7 +34,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
         };
 
   return (
-    <div className="h-full p-8 overflow-y-auto">
+    <div className="h-full p-4 overflow-y-auto">
       {/* Full Screen Dashed Border Container */}
       <div className="h-full w-full border-2 border-dashed border-gray-300 rounded-2xl bg-white flex items-center justify-center">
         <div className="w-full max-w-3xl mx-auto px-12 space-y-12">

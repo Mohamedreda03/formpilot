@@ -11,6 +11,7 @@ import { MainContent } from "./components/main-content";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorMessage } from "@/components/ui/error-message";
 import { useFormStore, Question } from "@/stores/form-store";
+import { MobileOverlay } from "@/components/ui/mobile-overlay";
 
 export default function FormEditPage({
   params,
@@ -37,12 +38,26 @@ export default function FormEditPage({
   const [showQuestionTypePicker, setShowQuestionTypePicker] =
     React.useState(false);
 
+  const [initialLoadComplete, setInitialLoadComplete] = React.useState(false);
+
   useEffect(() => {
     if (!formId || formId === "new") return;
-    loadForm(formId);
+
+    const loadFormData = async () => {
+      try {
+        await loadForm(formId);
+        setInitialLoadComplete(true);
+      } catch (error) {
+        console.error("Failed to load form:", error);
+        setInitialLoadComplete(true);
+      }
+    };
+
+    loadFormData();
   }, [formId, loadForm]);
 
-  if (isLoading) {
+  // Show loading only during initial load
+  if (isLoading && !initialLoadComplete) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <LoadingSpinner />
@@ -50,7 +65,8 @@ export default function FormEditPage({
     );
   }
 
-  if (error) {
+  // Show error only if we've completed initial load and there's an error
+  if (error && initialLoadComplete) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <ErrorMessage message={error} />
@@ -58,10 +74,20 @@ export default function FormEditPage({
     );
   }
 
-  if (!form) {
+  // Show form not found only if we've completed initial load and there's no form
+  if (!form && initialLoadComplete && !isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <ErrorMessage message="Form not found" />
+      </div>
+    );
+  }
+
+  // If still loading or form not ready, show loading
+  if (!form || !initialLoadComplete) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <LoadingSpinner />
       </div>
     );
   }
@@ -156,33 +182,41 @@ export default function FormEditPage({
   };
 
   return (
-    <div className="flex h-screen">
-      <QuestionsSidebar
-        questions={form.questions}
-        selectedQuestionId={selectedQuestionId || undefined}
-        selectedPage={selectedPage}
-        onQuestionSelect={handleQuestionSelect}
-        onPageSelect={handlePageSelect}
-        onQuestionDuplicate={handleQuestionDuplicate}
-        onQuestionDelete={handleQuestionDelete}
-        onAddQuestion={handleAddQuestion}
-        onQuestionsReorder={handleQuestionsReorder}
-        introPage={introPage}
-        outroPage={outroPage}
-      />
+    <>
+      {/* Mobile Screen Overlay */}
+      <MobileOverlay />
 
-      <div className="flex-1 flex flex-col relative">
-        <ContentToolbar onAddContent={handleAddQuestion} />
-        <MainContent />
+      {/* Main Content - Hidden on Mobile */}
+      <div className="hidden lg:flex h-[calc(100vh-60px)] overflow-hidden bg-gray-50">
+        <QuestionsSidebar
+          questions={form.questions}
+          selectedQuestionId={selectedQuestionId || undefined}
+          selectedPage={selectedPage}
+          onQuestionSelect={handleQuestionSelect}
+          onPageSelect={handlePageSelect}
+          onQuestionDuplicate={handleQuestionDuplicate}
+          onQuestionDelete={handleQuestionDelete}
+          onAddQuestion={handleAddQuestion}
+          onQuestionsReorder={handleQuestionsReorder}
+          introPage={introPage}
+          outroPage={outroPage}
+        />
+
+        <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+          <ContentToolbar onAddContent={handleAddQuestion} />
+          <div className="flex-1 overflow-hidden">
+            <MainContent />
+          </div>
+        </div>
+
+        <SettingsSidebar />
+
+        <QuestionTypePicker
+          isOpen={showQuestionTypePicker}
+          onClose={() => setShowQuestionTypePicker(false)}
+          onSelectType={handleSelectQuestionType}
+        />
       </div>
-
-      <SettingsSidebar />
-
-      <QuestionTypePicker
-        isOpen={showQuestionTypePicker}
-        onClose={() => setShowQuestionTypePicker(false)}
-        onSelectType={handleSelectQuestionType}
-      />
-    </div>
+    </>
   );
 }
