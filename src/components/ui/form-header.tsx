@@ -3,6 +3,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, Settings, Share2, Save } from "lucide-react";
+import { Separator } from "./separator";
 
 interface FormHeaderProps {
   title: string;
@@ -10,7 +11,6 @@ interface FormHeaderProps {
   onPreview?: () => void;
   onSettings?: () => void;
   onShare?: () => void;
-  onSave?: () => void;
 }
 
 export function FormHeader({
@@ -19,10 +19,9 @@ export function FormHeader({
   onPreview,
   onSettings,
   onShare,
-  onSave,
 }: FormHeaderProps) {
   return (
-    <div className="border-b">
+    <div className="border-b border-gray-200 shadow-none">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-4">
           <Button
@@ -31,8 +30,10 @@ export function FormHeader({
             onClick={onBack}
             className="h-8 w-8 p-0"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-6 w-6" />
           </Button>
+
+          {/* <Separator orientation="vertical" className="w-2" /> */}
 
           <div>
             <h1 className="text-xl font-semibold">{title}</h1>
@@ -40,31 +41,17 @@ export function FormHeader({
         </div>
 
         <div className="flex items-center gap-2">
-          {onSettings && (
-            <Button variant="outline" size="sm" onClick={onSettings}>
-              <Settings className="mr-2 h-4 w-4" />
-              Settings
-            </Button>
-          )}
+          {/* TODO: Add subscription button */}
 
           {onPreview && (
             <Button variant="outline" size="sm" onClick={onPreview}>
-              <Eye className="mr-2 h-4 w-4" />
-              Preview
+              <Eye className="h-4 w-4" />
             </Button>
           )}
 
           {onShare && (
             <Button variant="outline" size="sm" onClick={onShare}>
-              <Share2 className="mr-2 h-4 w-4" />
-              Share
-            </Button>
-          )}
-
-          {onSave && (
-            <Button size="sm" onClick={onSave}>
-              <Save className="mr-2 h-4 w-4" />
-              Save
+              <Share2 className="h-4 w-4" />
             </Button>
           )}
         </div>

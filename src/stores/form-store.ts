@@ -39,6 +39,7 @@ export interface Form {
   outroTitle?: string;
   outroDescription?: string;
   outroButtonText?: string;
+  design?: string; // JSON string containing design data
 }
 
 interface FormState {

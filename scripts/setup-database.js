@@ -600,6 +600,16 @@ async function createTemplatesCollection() {
     );
     await delay(500);
 
+    console.log("🎨 Adding design attribute...");
+    await databases.createStringAttribute(
+      config.databaseId,
+      config.collections.templates,
+      "design",
+      65535, // Large text for JSON design data
+      false // optional
+    );
+    await delay(500);
+
     console.log("🎨 Adding indexes...");
     // Create indexes
     await databases.createIndex(

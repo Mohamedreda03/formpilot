@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Star, Upload } from "lucide-react";
-import { Question } from "@/app/(protected)/form/[formId]/components/question-type-picker";
+import { Question } from "@/stores/form-store";
 import { getQuestionTypeConfig } from "@/lib/question-types";
 import { cn } from "@/lib/utils";
 
@@ -99,7 +99,7 @@ export function QuestionPreview({ question, className }: QuestionPreviewProps) {
         return (
           <RadioGroup disabled className="space-y-3">
             {(question.options || ["Option 1", "Option 2"]).map(
-              (option, index) => (
+              (option: string, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
                   <RadioGroupItem value={option} id={`option-${index}`} />
                   <Label
@@ -118,7 +118,7 @@ export function QuestionPreview({ question, className }: QuestionPreviewProps) {
         return (
           <div className="space-y-3">
             {(question.options || ["Option 1", "Option 2"]).map(
-              (option, index) => (
+              (option: string, index: number) => (
                 <div key={index} className="flex items-center space-x-2">
                   <Checkbox id={`checkbox-${index}`} disabled />
                   <Label
@@ -141,7 +141,7 @@ export function QuestionPreview({ question, className }: QuestionPreviewProps) {
             </SelectTrigger>
             <SelectContent>
               {(question.options || ["Option 1", "Option 2"]).map(
-                (option, index) => (
+                (option: string, index: number) => (
                   <SelectItem key={index} value={option}>
                     {option}
                   </SelectItem>

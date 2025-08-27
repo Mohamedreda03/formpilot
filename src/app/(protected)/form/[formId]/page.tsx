@@ -4,10 +4,9 @@ import React, { useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import QuestionsSidebar from "./components/questions-sidebar";
 import SettingsSidebar from "./components/settings-sidebar";
-import QuestionTypePicker, {
-  QuestionType,
-} from "./components/question-type-picker";
-import { FormHeader } from "@/components/ui/form-header";
+import QuestionTypePicker from "./components/question-type-picker";
+import ContentToolbar from "./components/content-toolbar";
+import { QuestionType } from "@/lib/question-types";
 import { MainContent } from "./components/main-content";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { ErrorMessage } from "@/components/ui/error-message";
@@ -157,35 +156,27 @@ export default function FormEditPage({
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <FormHeader
-        title={form.title}
-        onBack={() => router.back()}
-        onPreview={() => {}}
-        onSettings={() => {}}
-        onShare={() => {}}
-        onSave={() => {}}
+    <div className="flex h-screen">
+      <QuestionsSidebar
+        questions={form.questions}
+        selectedQuestionId={selectedQuestionId || undefined}
+        selectedPage={selectedPage}
+        onQuestionSelect={handleQuestionSelect}
+        onPageSelect={handlePageSelect}
+        onQuestionDuplicate={handleQuestionDuplicate}
+        onQuestionDelete={handleQuestionDelete}
+        onAddQuestion={handleAddQuestion}
+        onQuestionsReorder={handleQuestionsReorder}
+        introPage={introPage}
+        outroPage={outroPage}
       />
 
-      <div className="flex h-[calc(100vh-73px)]">
-        <QuestionsSidebar
-          questions={form.questions}
-          selectedQuestionId={selectedQuestionId || undefined}
-          selectedPage={selectedPage}
-          onQuestionSelect={handleQuestionSelect}
-          onPageSelect={handlePageSelect}
-          onQuestionDuplicate={handleQuestionDuplicate}
-          onQuestionDelete={handleQuestionDelete}
-          onAddQuestion={handleAddQuestion}
-          onQuestionsReorder={handleQuestionsReorder}
-          introPage={introPage}
-          outroPage={outroPage}
-        />
-
+      <div className="flex-1 flex flex-col relative">
+        <ContentToolbar onAddContent={handleAddQuestion} />
         <MainContent />
-
-        <SettingsSidebar />
       </div>
+
+      <SettingsSidebar />
 
       <QuestionTypePicker
         isOpen={showQuestionTypePicker}

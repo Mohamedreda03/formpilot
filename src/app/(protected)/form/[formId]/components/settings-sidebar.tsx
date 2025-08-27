@@ -1,13 +1,25 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ChevronDown } from "lucide-react";
 import { useFormStore } from "@/stores/form-store";
+import {
+  QUESTION_TYPES,
+  getQuestionTypeConfig,
+  QuestionType,
+} from "@/lib/question-types";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 
 export default function SettingsSidebar() {
   const { form, selectedQuestionId, selectedPage, updateForm, updateQuestion } =
@@ -31,6 +43,27 @@ export default function SettingsSidebar() {
     }
   };
 
+  const handleQuestionTypeChange = (newType: QuestionType) => {
+    if (selectedQuestion) {
+      const updates: any = { type: newType };
+
+      // Reset type-specific properties when changing type
+      if (!["multiple-choice", "checkbox", "dropdown"].includes(newType)) {
+        updates.options = undefined;
+      } else if (!selectedQuestion.options) {
+        updates.options = ["Option 1", "Option 2"];
+      }
+
+      if (newType !== "rating") {
+        updates.maxRating = undefined;
+      } else if (!selectedQuestion.maxRating) {
+        updates.maxRating = 5;
+      }
+
+      handleQuestionUpdate(updates);
+    }
+  };
+
   const handlePageUpdate = (field: string, value: string) => {
     if (selectedPage === "intro") {
       updateForm({ [`intro${field}`]: value });
@@ -50,11 +83,7 @@ export default function SettingsSidebar() {
   };
 
   const removeOption = (index: number) => {
-    if (
-      selectedQuestion &&
-      selectedQuestion.options &&
-      selectedQuestion.options.length > 1
-    ) {
+    if (selectedQuestion && selectedQuestion.options) {
       const newOptions = selectedQuestion.options.filter((_, i) => i !== index);
       handleQuestionUpdate({ options: newOptions });
     }
@@ -68,55 +97,120 @@ export default function SettingsSidebar() {
     }
   };
 
-  // Show Question Settings
+  // Question Settings
   if (selectedQuestion) {
+    const currentTypeConfig = getQuestionTypeConfig(selectedQuestion.type);
+
     return (
-      <div className="w-80 bg-gray-50 border-l border-gray-200 overflow-y-auto">
-        <div className="p-6 border-b border-gray-200 bg-white">
-          <h3 className="font-semibold text-gray-900">Question Settings</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            Question {selectedQuestion.order} • {selectedQuestion.type}
-          </p>
+      <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="p-4 border-b border-gray-100 bg-gray-50">
+          <h3 className="font-semibold text-gray-900 text-sm">
+            Question Settings
+          </h3>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
+          {/* Question Type Selector */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium text-gray-700">
+              Question Type
+            </Label>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-full justify-between h-10"
+                >
+                  <div className="flex items-center space-x-2">
+                    {currentTypeConfig && (
+                      <div
+                        className={cn("p-1 rounded", currentTypeConfig.color)}
+                      >
+                        <currentTypeConfig.icon className="h-3 w-3" />
+                      </div>
+                    )}
+                    <span className="text-sm">
+                      {currentTypeConfig?.label || selectedQuestion.type}
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-gray-400" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-64 max-h-60 overflow-y-auto">
+                {QUESTION_TYPES.map((questionType) => {
+                  const IconComponent = questionType.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={questionType.type}
+                      onClick={() =>
+                        handleQuestionTypeChange(
+                          questionType.type as QuestionType
+                        )
+                      }
+                      className="flex items-center space-x-2 p-2"
+                    >
+                      <div
+                        className={cn(
+                          "p-1 rounded flex-shrink-0",
+                          questionType.color
+                        )}
+                      >
+                        <IconComponent className="h-3 w-3" />
+                      </div>
+                      <span className="text-sm">{questionType.label}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
           {/* Question Title */}
           <div className="space-y-2">
-            <Label htmlFor="question-title">Question</Label>
+            <Label
+              htmlFor="question-title"
+              className="text-sm font-medium text-gray-700"
+            >
+              Title
+            </Label>
             <Textarea
               id="question-title"
               value={selectedQuestion.title}
               onChange={(e) => handleQuestionUpdate({ title: e.target.value })}
-              placeholder="Type your question"
-              rows={2}
-              className="text-base"
+              className="min-h-[60px] resize-none"
+              placeholder="Enter question title..."
             />
           </div>
 
-          {/* Description */}
+          {/* Question Description */}
           <div className="space-y-2">
-            <Label htmlFor="question-description">Description (optional)</Label>
+            <Label
+              htmlFor="question-description"
+              className="text-sm font-medium text-gray-700"
+            >
+              Description
+            </Label>
             <Textarea
               id="question-description"
               value={selectedQuestion.description || ""}
               onChange={(e) =>
                 handleQuestionUpdate({ description: e.target.value })
               }
-              placeholder="Add context or instructions"
-              rows={2}
-              className="text-sm"
+              className="min-h-[60px] resize-none"
+              placeholder="Enter question description..."
             />
           </div>
 
           {/* Required Toggle */}
           <div className="flex items-center justify-between">
-            <div>
-              <Label className="text-sm font-medium">Required</Label>
-              <p className="text-xs text-gray-500">
-                Users must answer this question
-              </p>
-            </div>
+            <Label
+              htmlFor="required"
+              className="text-sm font-medium text-gray-700"
+            >
+              Required
+            </Label>
             <Switch
+              id="required"
               checked={selectedQuestion.required}
               onCheckedChange={(checked) =>
                 handleQuestionUpdate({ required: checked })
@@ -130,15 +224,19 @@ export default function SettingsSidebar() {
             selectedQuestion.type === "email" ||
             selectedQuestion.type === "number") && (
             <div className="space-y-2">
-              <Label htmlFor="placeholder">Placeholder</Label>
+              <Label
+                htmlFor="placeholder"
+                className="text-sm font-medium text-gray-700"
+              >
+                Placeholder
+              </Label>
               <Input
                 id="placeholder"
                 value={selectedQuestion.placeholder || ""}
                 onChange={(e) =>
                   handleQuestionUpdate({ placeholder: e.target.value })
                 }
-                placeholder="Type your answer here..."
-                className="text-sm"
+                placeholder="Enter placeholder text..."
               />
             </div>
           )}
@@ -147,41 +245,38 @@ export default function SettingsSidebar() {
           {(selectedQuestion.type === "multiple-choice" ||
             selectedQuestion.type === "checkbox" ||
             selectedQuestion.type === "dropdown") && (
-            <div className="space-y-3">
+            <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Choices</Label>
+                <Label className="text-sm font-medium text-gray-700">
+                  Choices
+                </Label>
                 <Button
                   onClick={addOption}
                   size="sm"
                   variant="outline"
-                  className="h-8 w-8 p-0"
+                  className="h-7 px-2"
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-3 w-3 mr-1" />
+                  Add
                 </Button>
               </div>
               <div className="space-y-2">
                 {selectedQuestion.options?.map((option, index) => (
                   <div key={index} className="flex items-center space-x-2">
-                    <span className="text-gray-400 text-sm w-6">
-                      {String.fromCharCode(65 + index)}
-                    </span>
                     <Input
                       value={option}
                       onChange={(e) => updateOption(index, e.target.value)}
-                      placeholder={`Choice ${index + 1}`}
-                      className="flex-1 text-sm"
+                      className="flex-1 h-8"
+                      placeholder={`Option ${index + 1}`}
                     />
-                    {selectedQuestion.options &&
-                      selectedQuestion.options.length > 1 && (
-                        <Button
-                          onClick={() => removeOption(index)}
-                          size="sm"
-                          variant="outline"
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      )}
+                    <Button
+                      onClick={() => removeOption(index)}
+                      size="sm"
+                      variant="ghost"
+                      className="h-8 w-8 p-0 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </Button>
                   </div>
                 ))}
               </div>
@@ -191,7 +286,12 @@ export default function SettingsSidebar() {
           {/* Rating scale */}
           {selectedQuestion.type === "rating" && (
             <div className="space-y-2">
-              <Label htmlFor="max-rating">Steps</Label>
+              <Label
+                htmlFor="max-rating"
+                className="text-sm font-medium text-gray-700"
+              >
+                Rating Scale (1 to X)
+              </Label>
               <Input
                 id="max-rating"
                 type="number"
@@ -201,11 +301,7 @@ export default function SettingsSidebar() {
                 onChange={(e) =>
                   handleQuestionUpdate({ maxRating: parseInt(e.target.value) })
                 }
-                className="text-sm"
               />
-              <p className="text-xs text-gray-500">
-                Number of rating steps (2-10)
-              </p>
             </div>
           )}
         </div>
@@ -213,70 +309,72 @@ export default function SettingsSidebar() {
     );
   }
 
-  // Show Page Settings
+  // Page Settings (Intro/Outro)
   if (selectedPage) {
-    const pageData =
-      selectedPage === "intro"
-        ? {
-            title: form.introTitle || "",
-            description: form.introDescription || "",
-            buttonText: form.introButtonText || "",
-          }
-        : {
-            title: form.outroTitle || "",
-            description: form.outroDescription || "",
-            buttonText: form.outroButtonText || "",
-          };
+    const pageTitle =
+      selectedPage === "intro" ? "Welcome Page" : "Thank You Page";
+    const titleValue =
+      selectedPage === "intro" ? form.introTitle : form.outroTitle;
+    const descriptionValue =
+      selectedPage === "intro" ? form.introDescription : form.outroDescription;
+    const buttonValue =
+      selectedPage === "intro" ? form.introButtonText : form.outroButtonText;
 
     return (
-      <div className="w-80 bg-gray-50 border-l border-gray-200 overflow-y-auto">
-        <div className="p-6 border-b border-gray-200 bg-white">
-          <h3 className="font-semibold text-gray-900">Page Settings</h3>
-          <p className="text-sm text-gray-500 mt-1">
-            {selectedPage === "intro" ? "Welcome screen" : "Thank you screen"}
-          </p>
+      <div className="w-80 bg-white border-l border-gray-200 flex flex-col h-full overflow-hidden">
+        <div className="p-4 border-b border-gray-100 bg-gray-50">
+          <h3 className="font-semibold text-gray-900 text-sm">
+            {pageTitle} Settings
+          </h3>
         </div>
 
-        <div className="p-6 space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 space-y-6">
           {/* Page Title */}
           <div className="space-y-2">
-            <Label htmlFor="page-title">Title</Label>
-            <Textarea
+            <Label
+              htmlFor="page-title"
+              className="text-sm font-medium text-gray-700"
+            >
+              Title
+            </Label>
+            <Input
               id="page-title"
-              value={pageData.title}
+              value={titleValue || ""}
               onChange={(e) => handlePageUpdate("Title", e.target.value)}
-              placeholder={selectedPage === "intro" ? "Welcome" : "Thank you"}
-              rows={2}
-              className="text-base"
+              placeholder="Enter page title..."
             />
           </div>
 
           {/* Page Description */}
           <div className="space-y-2">
-            <Label htmlFor="page-description">Description</Label>
+            <Label
+              htmlFor="page-description"
+              className="text-sm font-medium text-gray-700"
+            >
+              Description
+            </Label>
             <Textarea
               id="page-description"
-              value={pageData.description}
+              value={descriptionValue || ""}
               onChange={(e) => handlePageUpdate("Description", e.target.value)}
-              placeholder={
-                selectedPage === "intro"
-                  ? "Please fill out this form"
-                  : "Your response has been submitted"
-              }
-              rows={3}
-              className="text-sm"
+              className="min-h-[80px] resize-none"
+              placeholder="Enter page description..."
             />
           </div>
 
           {/* Button Text */}
           <div className="space-y-2">
-            <Label htmlFor="button-text">Button text</Label>
+            <Label
+              htmlFor="button-text"
+              className="text-sm font-medium text-gray-700"
+            >
+              Button Text
+            </Label>
             <Input
               id="button-text"
-              value={pageData.buttonText}
+              value={buttonValue || ""}
               onChange={(e) => handlePageUpdate("ButtonText", e.target.value)}
-              placeholder={selectedPage === "intro" ? "Start" : "Submit"}
-              className="text-sm"
+              placeholder="Enter button text..."
             />
           </div>
         </div>
@@ -284,11 +382,11 @@ export default function SettingsSidebar() {
     );
   }
 
-  // No selection
+  // Default state - no selection
   return (
-    <div className="w-80 bg-gray-50 border-l border-gray-200 flex items-center justify-center">
+    <div className="w-80 bg-white border-l border-gray-200 flex items-center justify-center">
       <div className="text-center space-y-2 p-6">
-        <p className="text-gray-400 text-sm">
+        <p className="text-gray-500 text-sm">
           Select a question or page to edit its settings
         </p>
       </div>

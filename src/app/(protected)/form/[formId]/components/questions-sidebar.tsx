@@ -100,15 +100,39 @@ function SortableQuestion({
     }
   };
 
+  // Extract colors from questionTypeConfig for dashed border
+  const getCardColors = () => {
+    if (!questionTypeConfig) {
+      return {
+        borderColor: "border-gray-300",
+        iconColor: "text-gray-600",
+        textColor: "text-gray-800",
+      };
+    }
+
+    // Extract base color from the config color classes
+    const baseColor = questionTypeConfig.color.split(" ")[0]; // e.g., "bg-blue-50"
+    const colorName = baseColor.split("-")[1]; // e.g., "blue"
+
+    return {
+      borderColor: `border-${colorName}-400`,
+      iconColor: `text-${colorName}-600`,
+      textColor: `text-gray-800`,
+    };
+  };
+
+  const { borderColor, iconColor, textColor } = getCardColors();
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative bg-white border rounded-lg p-3 transition-all duration-200 select-none",
+        "group relative bg-white rounded-lg p-3 transition-all duration-200 select-none border-2 border-dashed",
+        borderColor,
         isSelected
-          ? "ring-2 ring-slate-400 border-slate-300 bg-slate-50"
-          : "border-gray-200 hover:border-slate-300 hover:shadow-sm",
+          ? `bg-slate-50 border-[${iconColor}] border-destructive`
+          : "hover:bg-gray-50 hover:shadow-sm",
         sortableIsDragging && "opacity-50",
         "cursor-pointer hover:cursor-grab active:cursor-grabbing"
       )}
@@ -116,30 +140,28 @@ function SortableQuestion({
       {...attributes}
       {...listeners}
     >
-      <div className="flex items-start space-x-3 pointer-events-none">
+      <div className="flex items-center space-x-3 pointer-events-none">
         {/* Question Type Icon */}
-        <div className="flex-shrink-0 mt-0.5">
-          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
-            {IconComponent ? (
-              <IconComponent className="w-4 h-4 text-slate-600" />
-            ) : (
-              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-            )}
-          </div>
+        <div className="flex-shrink-0">
+          {IconComponent ? (
+            <IconComponent className={cn("w-4 h-4", iconColor)} />
+          ) : (
+            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+          )}
         </div>
 
         {/* Question Content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex-1 min-w-0">
-              <p className="text-xs font-medium text-gray-900 leading-tight line-clamp-2 mb-1">
+              <p
+                className={cn(
+                  "text-sm font-medium leading-tight truncate",
+                  textColor
+                )}
+              >
                 {question.order}. {question.title}
               </p>
-              {question.description && (
-                <p className="text-xs text-gray-500 line-clamp-1">
-                  {question.description}
-                </p>
-              )}
             </div>
 
             {/* Question Menu */}
@@ -151,7 +173,7 @@ function SortableQuestion({
                       e.stopPropagation();
                       e.preventDefault();
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-100 transition-all"
+                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-white/80 transition-all"
                   >
                     <MoreVertical className="h-3 w-3" />
                   </button>
@@ -193,27 +215,52 @@ function QuestionOverlay({ question }: { question: Question }) {
   const questionTypeConfig = getQuestionTypeConfig(question.type);
   const IconComponent = questionTypeConfig?.icon;
 
+  // Extract colors from questionTypeConfig for dashed border
+  const getCardColors = () => {
+    if (!questionTypeConfig) {
+      return {
+        borderColor: "border-gray-300",
+        iconColor: "text-gray-600",
+        textColor: "text-gray-800",
+      };
+    }
+
+    const baseColor = questionTypeConfig.color.split(" ")[0];
+    const colorName = baseColor.split("-")[1];
+
+    return {
+      borderColor: `border-${colorName}-400`,
+      iconColor: `text-${colorName}-600`,
+      textColor: `text-gray-800`,
+    };
+  };
+
+  const { borderColor, iconColor, textColor } = getCardColors();
+
   return (
-    <div className="bg-white border rounded-lg p-3 shadow-lg opacity-90 rotate-3 scale-105">
-      <div className="flex items-start space-x-3">
-        <div className="flex-shrink-0 mt-0.5">
-          <div className="w-7 h-7 rounded-lg bg-slate-100 flex items-center justify-center">
-            {IconComponent ? (
-              <IconComponent className="w-4 h-4 text-slate-600" />
-            ) : (
-              <div className="w-1.5 h-1.5 bg-slate-400 rounded-full"></div>
-            )}
-          </div>
+    <div
+      className={cn(
+        "bg-white border-2 border-dashed rounded-lg p-3 shadow-lg opacity-90 rotate-3 scale-105",
+        borderColor
+      )}
+    >
+      <div className="flex items-center space-x-3">
+        <div className="flex-shrink-0">
+          {IconComponent ? (
+            <IconComponent className={cn("w-4 h-4", iconColor)} />
+          ) : (
+            <div className="w-1 h-1 bg-gray-400 rounded-full"></div>
+          )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-medium text-gray-900 leading-tight line-clamp-2 mb-1">
+          <p
+            className={cn(
+              "text-sm font-medium leading-tight truncate",
+              textColor
+            )}
+          >
             {question.order}. {question.title}
           </p>
-          {question.description && (
-            <p className="text-xs text-gray-500 line-clamp-1">
-              {question.description}
-            </p>
-          )}
         </div>
       </div>
     </div>
@@ -275,19 +322,11 @@ export default function QuestionsSidebar({
 
   return (
     <div className="w-80 bg-white border-r border-gray-200 flex flex-col h-full">
-      {/* Header */}
-      <div className="p-4 border-b border-gray-100 bg-gray-50">
-        <h3 className="font-semibold text-gray-900 text-sm">Form Structure</h3>
-      </div>
-
       {/* Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Intro Page */}
         <div className="p-4 border-b border-gray-100">
-          <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
-            Welcome
-          </h4>
-          <div className="transform scale-90 origin-top-left">
+          <div>
             <PageItem
               type="intro"
               title={introPage.title}
@@ -314,7 +353,7 @@ export default function QuestionsSidebar({
           </div>
 
           {/* Scrollable Questions with Drag & Drop */}
-          <div className="flex-1 overflow-y-auto px-4 pb-4 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 pb-4 pt-4 custom-scrollbar">
             <DndContext
               sensors={sensors}
               collisionDetection={closestCenter}
