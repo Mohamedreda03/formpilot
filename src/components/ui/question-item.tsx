@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Copy, Trash2, GripVertical } from "lucide-react";
-import { Question } from "@/app/(protected)/[formId]/components/question-type-picker";
+import { Question } from "@/app/(protected)/form/[formId]/components/question-type-picker";
 import { getQuestionTypeConfig } from "@/lib/question-types";
 
 interface QuestionItemProps {

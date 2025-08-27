@@ -17,7 +17,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Star, Upload } from "lucide-react";
-import { Question } from "@/app/(protected)/[formId]/components/question-type-picker";
+import { Question } from "@/app/(protected)/form/[formId]/components/question-type-picker";
 import { getQuestionTypeConfig } from "@/lib/question-types";
 import { cn } from "@/lib/utils";
 

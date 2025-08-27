@@ -1,337 +1,232 @@
-"use client";
-
 import { create } from "zustand";
-import { devtools } from "zustand/middleware";
-import { FormData, Question, PageData } from "@/lib/forms-service";
-import { QuestionType } from "@/app/(protected)/[formId]/components/question-type-picker";
-import { FormsService } from "@/lib/forms-service";
-import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
+import { devtools, persist } from "zustand/middleware";
+import { QuestionType } from "@/lib/question-types";
 
-interface FormState {
-  // State
-  form: FormData | null;
-  loading: boolean;
-  error: string | null;
-  saving: boolean;
-
-  // Selected items
-  selectedQuestionId: string | null;
-  selectedPage: "intro" | "outro" | null;
-
-  // Actions
-  setForm: (form: FormData) => void;
-  setLoading: (loading: boolean) => void;
-  setError: (error: string | null) => void;
-  setSaving: (saving: boolean) => void;
-
-  // Selection actions
-  selectQuestion: (questionId: string | null) => void;
-  selectPage: (page: "intro" | "outro" | null) => void;
-
-  // Question actions
-  changeQuestionType: (questionId: string, newType: QuestionType) => void;
-  updateQuestion: (questionId: string, updates: Partial<Question>) => void;
-  addQuestion: (question: Question) => void;
-  deleteQuestion: (questionId: string) => void;
-  duplicateQuestion: (questionId: string) => void;
-  reorderQuestions: (questions: Question[]) => void;
-
-  // Page actions
-  updateIntroPage: (updates: Partial<PageData>) => void;
-  updateOutroPage: (updates: Partial<PageData>) => void;
-
-  // API actions
-  loadForm: (formId: string) => Promise<void>;
-  saveQuestion: (
-    questionId: string,
-    updates: Partial<Question>
-  ) => Promise<void>;
-  saveIntroPage: (updates: PageData) => Promise<void>;
-  saveOutroPage: (updates: PageData) => Promise<void>;
+export interface Question {
+  id: string;
+  title: string;
+  description?: string;
+  type: QuestionType;
+  order: number;
+  required: boolean;
+  options?: string[];
+  placeholder?: string;
+  maxRating?: number;
+  acceptedFormats?: string;
 }
 
-export const useFormStore = create<FormState>()(
+export interface FormPage {
+  id: string;
+  title: string;
+  order: number;
+}
+
+export interface Form {
+  id: string;
+  title: string;
+  description?: string;
+  questions: Question[];
+  pages: FormPage[];
+  settings: {
+    allowAnonymous: boolean;
+    requireEmail: boolean;
+    multipleSubmissions: boolean;
+    showProgress: boolean;
+  };
+  introTitle?: string;
+  introDescription?: string;
+  introButtonText?: string;
+  outroTitle?: string;
+  outroDescription?: string;
+  outroButtonText?: string;
+}
+
+interface FormState {
+  form: Form | null;
+  selectedQuestionId: string | null;
+  selectedPage: "intro" | "outro" | null;
+  isLoading: boolean;
+  error: string | null;
+}
+
+interface FormActions {
+  setForm: (form: Form) => void;
+  loadForm: (formId: string) => Promise<void>;
+  updateForm: (updates: Partial<Form>) => void;
+  setSelectedQuestionId: (id: string | null) => void;
+  setSelectedPage: (page: "intro" | "outro" | null) => void;
+  updateQuestion: (questionId: string, updates: Partial<Question>) => void;
+  addQuestion: (question: Omit<Question, "id" | "order">) => void;
+  deleteQuestion: (questionId: string) => void;
+  reorderQuestions: (questions: Question[]) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+}
+
+type FormStore = FormState & FormActions;
+
+export const useFormStore = create<FormStore>()(
   devtools(
-    (set, get) => ({
-      // Initial state
-      form: null,
-      loading: false,
-      error: null,
-      saving: false,
-      selectedQuestionId: null,
-      selectedPage: null,
+    persist(
+      (set) => ({
+        form: null,
+        selectedQuestionId: null,
+        selectedPage: null,
+        isLoading: false,
+        error: null,
 
-      // Basic state setters
-      setForm: (form) => set({ form }),
-      setLoading: (loading) => set({ loading }),
-      setError: (error) => set({ error }),
-      setSaving: (saving) => set({ saving }),
+        setForm: (form) => set({ form }),
 
-      // Selection actions
-      selectQuestion: (questionId) =>
-        set({
-          selectedQuestionId: questionId,
-          selectedPage: null,
+        loadForm: async (formId) => {
+          set({ isLoading: true, error: null });
+          try {
+            const mockForm: Form = {
+              id: formId,
+              title: "Sample Form",
+              description: "This is a sample form",
+              questions: [
+                {
+                  id: "q1",
+                  title: "What's your name?",
+                  description: "",
+                  type: "text",
+                  order: 1,
+                  required: true,
+                  placeholder: "Enter your name",
+                },
+                {
+                  id: "q2",
+                  title: "How would you rate our service?",
+                  description: "",
+                  type: "rating",
+                  order: 2,
+                  required: false,
+                  maxRating: 5,
+                },
+              ],
+              pages: [],
+              settings: {
+                allowAnonymous: true,
+                requireEmail: false,
+                multipleSubmissions: false,
+                showProgress: true,
+              },
+              introTitle: "Welcome to our survey",
+              introDescription:
+                "We'd love to hear your thoughts. Please take a few minutes to complete this survey.",
+              introButtonText: "Start",
+              outroTitle: "Thank you for your time",
+              outroDescription:
+                "Your responses have been recorded. We appreciate your feedback!",
+              outroButtonText: "Submit",
+            };
+
+            set({ form: mockForm, isLoading: false });
+          } catch (error) {
+            set({
+              error:
+                error instanceof Error ? error.message : "Failed to load form",
+              isLoading: false,
+            });
+          }
+        },
+
+        updateForm: (updates) =>
+          set((state) => ({
+            form: state.form ? { ...state.form, ...updates } : null,
+          })),
+
+        setSelectedQuestionId: (id) => set({ selectedQuestionId: id }),
+
+        setSelectedPage: (page) => set({ selectedPage: page }),
+
+        updateQuestion: (questionId, updates) =>
+          set((state) => {
+            if (!state.form) return state;
+
+            const updatedQuestions = state.form.questions.map((q) =>
+              q.id === questionId ? { ...q, ...updates } : q
+            );
+
+            return {
+              form: { ...state.form, questions: updatedQuestions },
+            };
+          }),
+
+        addQuestion: (questionData) =>
+          set((state) => {
+            if (!state.form) return state;
+
+            const newQuestion: Question = {
+              ...questionData,
+              id: `q_${Date.now()}`,
+              order: state.form.questions.length + 1,
+            };
+
+            return {
+              form: {
+                ...state.form,
+                questions: [...state.form.questions, newQuestion],
+              },
+            };
+          }),
+
+        deleteQuestion: (questionId) =>
+          set((state) => {
+            if (!state.form) return state;
+
+            const filteredQuestions = state.form.questions
+              .filter((q) => q.id !== questionId)
+              .map((q, index) => ({ ...q, order: index + 1 }));
+
+            return {
+              form: { ...state.form, questions: filteredQuestions },
+              selectedQuestionId:
+                state.selectedQuestionId === questionId
+                  ? null
+                  : state.selectedQuestionId,
+            };
+          }),
+
+        reorderQuestions: (reorderedQuestions) =>
+          set((state) => {
+            if (!state.form) return state;
+
+            const questionsWithUpdatedOrder = reorderedQuestions.map(
+              (q, index) => ({
+                ...q,
+                order: index + 1,
+              })
+            );
+
+            return {
+              form: { ...state.form, questions: questionsWithUpdatedOrder },
+            };
+          }),
+
+        setLoading: (loading) => set({ isLoading: loading }),
+
+        setError: (error) => set({ error }),
+      }),
+      {
+        name: "form-store",
+        partialize: (state) => ({
+          form: state.form,
+          selectedQuestionId: state.selectedQuestionId,
+          selectedPage: state.selectedPage,
         }),
-      selectPage: (page) =>
-        set({
-          selectedPage: page,
-          selectedQuestionId: null,
-        }),
-
-      // Question actions - immediate state updates
-      changeQuestionType: (questionId, newType) => {
-        const { form } = get();
-        if (!form) return;
-
-        const updates: Partial<Question> = {
-          type: newType,
-          // Reset type-specific properties when changing type
-          placeholder: undefined,
-          options:
-            newType === "multiple-choice" ||
-            newType === "checkbox" ||
-            newType === "dropdown"
-              ? ["Option 1", "Option 2"]
-              : undefined,
-          maxRating: newType === "rating" ? 5 : undefined,
-          acceptedFormats: undefined,
-        };
-
-        const updatedQuestions = form.questions.map((q) =>
-          q.id === questionId ? { ...q, ...updates } : q
-        );
-
-        set({
-          form: {
-            ...form,
-            questions: updatedQuestions,
-          },
-        });
-      },
-
-      updateQuestion: (questionId, updates) => {
-        const { form } = get();
-        if (!form) return;
-
-        const updatedQuestions = form.questions.map((q) =>
-          q.id === questionId ? { ...q, ...updates } : q
-        );
-
-        set({
-          form: {
-            ...form,
-            questions: updatedQuestions,
-          },
-        });
-      },
-
-      addQuestion: (question) => {
-        const { form } = get();
-        if (!form) return;
-
-        set({
-          form: {
-            ...form,
-            questions: [...form.questions, question],
-          },
-        });
-      },
-
-      deleteQuestion: (questionId) => {
-        const { form, selectedQuestionId } = get();
-        if (!form) return;
-
-        const updatedQuestions = form.questions.filter(
-          (q) => q.id !== questionId
-        );
-
-        set({
-          form: {
-            ...form,
-            questions: updatedQuestions,
-          },
-          selectedQuestionId:
-            selectedQuestionId === questionId ? null : selectedQuestionId,
-        });
-      },
-
-      duplicateQuestion: (questionId) => {
-        const { form } = get();
-        if (!form) return;
-
-        const questionToDuplicate = form.questions.find(
-          (q) => q.id === questionId
-        );
-        if (!questionToDuplicate) return;
-
-        const newQuestion: Question = {
-          ...questionToDuplicate,
-          id: `${questionId}_copy_${Date.now()}`,
-          title: `${questionToDuplicate.title} (Copy)`,
-          order: Math.max(...form.questions.map((q) => q.order)) + 1,
-        };
-
-        set({
-          form: {
-            ...form,
-            questions: [...form.questions, newQuestion],
-          },
-        });
-      },
-
-      reorderQuestions: (questions) => {
-        const { form } = get();
-        if (!form) return;
-
-        set({
-          form: {
-            ...form,
-            questions,
-          },
-        });
-      },
-
-      // Page actions - immediate state updates
-      updateIntroPage: (updates) => {
-        const { form } = get();
-        if (!form) return;
-
-        set({
-          form: {
-            ...form,
-            introTitle:
-              updates.title !== undefined ? updates.title : form.introTitle,
-            introDescription:
-              updates.description !== undefined
-                ? updates.description
-                : form.introDescription,
-            introButtonText:
-              updates.buttonText !== undefined
-                ? updates.buttonText
-                : form.introButtonText,
-          },
-        });
-      },
-
-      updateOutroPage: (updates) => {
-        const { form } = get();
-        if (!form) return;
-
-        set({
-          form: {
-            ...form,
-            outroTitle:
-              updates.title !== undefined ? updates.title : form.outroTitle,
-            outroDescription:
-              updates.description !== undefined
-                ? updates.description
-                : form.outroDescription,
-            outroButtonText:
-              updates.buttonText !== undefined
-                ? updates.buttonText
-                : form.outroButtonText,
-          },
-        });
-      },
-
-      // API actions
-      loadForm: async (formId) => {
-        try {
-          set({ loading: true, error: null });
-          const formData = await FormsService.getById(formId);
-          set({ form: formData, loading: false });
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to load form",
-            loading: false,
-          });
-        }
-      },
-
-      saveQuestion: async (questionId, updates) => {
-        const { form } = get();
-        if (!form) return;
-
-        try {
-          set({ saving: true });
-          const updatedQuestions = form.questions.map((q) =>
-            q.id === questionId ? { ...q, ...updates } : q
-          );
-
-          await FormsService.updateQuestionOrder(form.id!, updatedQuestions);
-          set({ saving: false });
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to save question",
-            saving: false,
-          });
-          throw error;
-        }
-      },
-
-      saveIntroPage: async (pageData) => {
-        const { form } = get();
-        if (!form) return;
-
-        try {
-          set({ saving: true });
-          await FormsService.updateIntroPage(form.id!, pageData);
-          set({ saving: false });
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to save intro page",
-            saving: false,
-          });
-          throw error;
-        }
-      },
-
-      saveOutroPage: async (pageData) => {
-        const { form } = get();
-        if (!form) return;
-
-        try {
-          set({ saving: true });
-          await FormsService.updateOutroPage(form.id!, pageData);
-          set({ saving: false });
-        } catch (error: any) {
-          set({
-            error: error.message || "Failed to save outro page",
-            saving: false,
-          });
-          throw error;
-        }
-      },
-    }),
-    {
-      name: "form-store",
-    }
+      }
+    ),
+    { name: "FormStore" }
   )
 );
 
-// Debounced hooks for auto-saving
 export const useDebouncedFormActions = () => {
-  const { saveQuestion, saveIntroPage, saveOutroPage } = useFormStore();
-
-  const debouncedSaveQuestion = useDebouncedUpdate(
-    (data: { questionId: string; updates: Partial<Question> }) => {
-      saveQuestion(data.questionId, data.updates);
-    },
-    1000
-  );
-
-  const debouncedSaveIntro = useDebouncedUpdate((pageData: PageData) => {
-    saveIntroPage(pageData);
-  }, 1000);
-
-  const debouncedSaveOutro = useDebouncedUpdate((pageData: PageData) => {
-    saveOutroPage(pageData);
-  }, 1000);
+  const updateQuestion = useFormStore((state) => state.updateQuestion);
+  const updateForm = useFormStore((state) => state.updateForm);
 
   return {
-    debouncedSaveQuestion,
-    debouncedSaveIntro,
-    debouncedSaveOutro,
+    updateQuestion,
+    updateForm,
   };
 };
