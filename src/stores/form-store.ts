@@ -3,7 +3,7 @@
 import { create } from "zustand";
 import { devtools } from "zustand/middleware";
 import { FormData, Question, PageData } from "@/lib/forms-service";
-import { QuestionType } from "@/app/form/[formId]/components/question-type-picker";
+import { QuestionType } from "@/app/(protected)/[formId]/components/question-type-picker";
 import { FormsService } from "@/lib/forms-service";
 import { useDebouncedUpdate } from "@/hooks/use-debounced-update";
 

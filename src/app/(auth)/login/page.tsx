@@ -45,7 +45,7 @@ export default function LoginPage() {
       if (redirectUrl) {
         router.push(decodeURIComponent(redirectUrl));
       } else {
-        router.push("/dashboard");
+        router.push("/ws");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
@@ -64,7 +64,7 @@ export default function LoginPage() {
       if (redirectUrl) {
         router.push(decodeURIComponent(redirectUrl));
       } else {
-        router.push("/dashboard");
+        router.push("/ws");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in with Google");

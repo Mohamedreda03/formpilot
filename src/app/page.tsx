@@ -159,8 +159,8 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center space-x-4">
             {user ? (
-              <Link href="/dashboard">
-                <Button>Go to Dashboard</Button>
+              <Link href="/ws">
+                <Button>Go to Workspace</Button>
               </Link>
             ) : (
               <>
@@ -192,9 +192,9 @@ export default function LandingPage() {
             flows.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <Link href={user ? "/dashboard" : "/login"}>
+            <Link href={user ? "/ws" : "/login"}>
               <Button size="lg" className="w-full sm:w-auto">
-                {user ? "Go to Dashboard" : "Start Building for Free"}
+                {user ? "Go to Workspace" : "Start Building for Free"}
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
@@ -286,7 +286,7 @@ export default function LandingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href={user ? "/dashboard" : "/login"} className="block">
+                  <Link href={user ? "/ws" : "/login"} className="block">
                     <Button
                       className="w-full"
                       variant={plan.popular ? "default" : "outline"}
@@ -313,13 +313,13 @@ export default function LandingPage() {
               amazing forms and collect valuable data.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href={user ? "/dashboard" : "/login"}>
+              <Link href={user ? "/ws" : "/login"}>
                 <Button
                   size="lg"
                   variant="secondary"
                   className="w-full sm:w-auto"
                 >
-                  {user ? "Go to Dashboard" : "Start Your Free Trial"}
+                  {user ? "Go to Workspace" : "Start Your Free Trial"}
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>

@@ -131,8 +131,8 @@ function WorkspaceLayoutContent({ children }: { children: React.ReactNode }) {
         {/* Right side navbar: important links + user menu */}
         <div className="flex items-center gap-3">
           <nav className="hidden sm:flex items-center gap-4">
-            <a href="/dashboard" className="text-sm hover:underline">
-              Dashboard
+            <a href="/ws" className="text-sm hover:underline">
+              Workspaces
             </a>
             <a href="/forms" className="text-sm hover:underline">
               Forms

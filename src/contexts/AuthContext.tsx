@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Create OAuth2 session with Google
       account.createOAuth2Session(
         OAuthProvider.Google,
-        `${window.location.origin}/dashboard`, // success redirect
+        `${window.location.origin}/ws`, // success redirect
         `${window.location.origin}/login?error=google_auth_failed` // failure redirect
       );
     } catch (error) {

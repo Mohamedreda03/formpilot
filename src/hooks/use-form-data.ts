@@ -225,7 +225,7 @@ export function useForm(formId: string) {
     try {
       setSaving(true);
       await FormsService.delete(form.id!);
-      router.push("/dashboard");
+      router.push("/ws");
     } catch (err: any) {
       setError(err.message || "Failed to delete form");
       throw err;

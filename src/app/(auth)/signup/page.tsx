@@ -65,7 +65,7 @@ export default function SignupPage() {
       if (redirectUrl) {
         router.push(decodeURIComponent(redirectUrl));
       } else {
-        router.push("/dashboard");
+        router.push("/ws");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
@@ -89,7 +89,7 @@ export default function SignupPage() {
       if (redirectUrl) {
         router.push(decodeURIComponent(redirectUrl));
       } else {
-        router.push("/dashboard");
+        router.push("/ws");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account with Google");
