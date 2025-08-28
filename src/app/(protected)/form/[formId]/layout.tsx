@@ -101,20 +101,20 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
 
             {/* Right Section: Action Buttons */}
             <div className="flex items-center space-x-3">
-              <button className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-200">
+              <Button variant="outline">
                 <Eye className="w-4 h-4" />
                 <span>Preview</span>
-              </button>
+              </Button>
 
-              <button className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-50 rounded-lg transition-all duration-200 border border-gray-200">
+              <Button variant="outline">
                 <Share2 className="w-4 h-4" />
                 <span>Share</span>
-              </button>
+              </Button>
 
-              <button className="inline-flex items-center space-x-2 px-4 py-2 text-sm font-medium bg-slate-700 text-white hover:bg-slate-800 rounded-lg transition-all duration-200 shadow-sm hover:shadow">
+              <Button variant="secondary">
                 <Save className="w-4 h-4" />
                 <span>Save</span>
-              </button>
+              </Button>
             </div>
           </div>
         </div>

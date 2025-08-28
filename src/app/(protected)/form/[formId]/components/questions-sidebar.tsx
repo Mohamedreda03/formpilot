@@ -31,6 +31,7 @@ import {
 } from "@dnd-kit/sortable";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import { Button } from "@/components/ui/button";
 
 interface QuestionsSidebarProps {
   questions: Question[];
@@ -128,11 +129,11 @@ function SortableQuestion({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative bg-white rounded-lg p-3 transition-all duration-200 select-none border-2 border-dashed",
+        "group relative bg-white rounded-lg py-1.5 px-3 transition-all duration-200 select-none border-2 border-dashed",
         borderColor,
         isSelected
           ? `bg-slate-50 border-[${iconColor}] border-destructive`
-          : "hover:bg-gray-50 hover:shadow-sm",
+          : " hover:shadow-sm",
         sortableIsDragging && "opacity-50",
         "cursor-pointer hover:cursor-grab active:cursor-grabbing"
       )}
@@ -173,9 +174,9 @@ function SortableQuestion({
                       e.stopPropagation();
                       e.preventDefault();
                     }}
-                    className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-white/80 transition-all"
+                    className="opacity-0 group-hover:opacity-100 cursor-pointer rounded-sm transition-all hover:bg-gray-100 p-1"
                   >
-                    <MoreVertical className="h-3 w-3" />
+                    <MoreVertical className="h-4 w-4 text-gray-600" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-32">
@@ -343,13 +344,14 @@ export default function QuestionsSidebar({
             <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide">
               Questions ({questions.length})
             </h4>
-            <button
+            <Button
               onClick={onAddQuestion}
-              className="w-6 h-6 rounded-lg bg-slate-700 hover:bg-slate-800 text-white flex items-center justify-center transition-colors duration-200 shadow-sm hover:shadow"
-              title="Add Question"
+              size="icon"
+              className="rounded-full"
+              variant="ghost"
             >
-              <Plus className="w-3.5 h-3.5" />
-            </button>
+              <Plus className="w-4 h-4" />
+            </Button>
           </div>
 
           {/* Scrollable Questions with Drag & Drop */}
@@ -392,7 +394,7 @@ export default function QuestionsSidebar({
           <h4 className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">
             Thank You
           </h4>
-          <div className="transform scale-90 origin-top-left">
+          <div className="">
             <PageItem
               type="outro"
               title={outroPage.title}

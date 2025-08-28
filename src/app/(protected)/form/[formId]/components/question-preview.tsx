@@ -88,7 +88,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
           <input
             type="text"
             placeholder={question.placeholder || "Type your answer here..."}
-            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300 form-input"
+            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300 form-input placeholder-[${design.secondaryColor}]`}
             style={{
               ...inputStyles,
               border: "none",
@@ -105,7 +105,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               question.placeholder || "Type your detailed answer here..."
             }
             rows={4}
-            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent resize-none font-medium transition-colors duration-300 form-textarea"
+            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent resize-none font-medium transition-colors duration-300 form-textarea placeholder-[${design.secondaryColor}]`}
             style={{
               ...inputStyles,
               border: "none",
@@ -187,8 +187,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
         return (
           <div className="space-y-3">
             <div
-              className="flex items-center space-x-3 text-sm font-medium mb-2"
-              style={getSecondaryTextStyles()}
+              className={`flex items-center space-x-3 text-sm font-medium mb-2`}
+              style={getAccentTextStyles()}
             >
               <svg
                 className="w-5 h-5"
@@ -208,7 +208,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
             <input
               type="number"
               placeholder={question.placeholder || "Enter a number..."}
-              className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
+              className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300`}
               style={{
                 ...inputStyles,
                 border: "none",

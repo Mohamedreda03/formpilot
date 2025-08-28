@@ -16,7 +16,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
     design,
     getContainerStyles,
     getButtonStyles,
-    getSecondaryTextStyles,
+    getAccentTextStyles,
     getTitleStyles,
   } = useFormDesign();
 
@@ -63,11 +63,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
                 />
               </div>
             </div>
-          ) : (
-            <div className="flex justify-center">
-              <div className="h-20 md:h-24"></div>
-            </div>
-          )}
+          ) : null}
 
           {/* Page Content with responsive typography */}
           <div className="space-y-6 md:space-y-8 text-center">
@@ -81,7 +77,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
             {pageData.description && (
               <p
                 className="text-base md:text-lg lg:text-xl xl:text-2xl leading-relaxed font-medium max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto"
-                style={getSecondaryTextStyles()}
+                style={getAccentTextStyles()}
               >
                 {pageData.description}
               </p>
@@ -91,7 +87,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
           {/* Enhanced Action Button Preview */}
           <div className="flex flex-col items-center space-y-6 md:space-y-8">
             <button
-              className="group relative px-6 py-3 md:px-8 md:py-4 lg:px-10 lg:py-5 text-base md:text-lg lg:text-xl font-bold rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 disabled:cursor-not-allowed"
+              className="group relative px-6 py-3 md:px-8 md:py-4 lg:px-10 lg:py-5 text-base md:text-lg lg:text-xl font-bold rounded-2xl shadow-xl transition-all duration-300 hover:scale-[1.03] hover:shadow-2xl focus:outline-none focus:ring-4 cursor-pointer"
               style={buttonStyles}
               disabled
             >

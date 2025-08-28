@@ -24,9 +24,16 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { useFormDesign } from "@/hooks/use-form-design";
 import { uploadImage, deleteImage } from "@/lib/image-upload";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface ContentToolbarProps {
   onAddContent: () => void;
@@ -224,23 +231,27 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
         <div className="bg-white border border-gray-200 rounded-xl px-3 py-2">
           <div className="flex items-center space-x-2">
             {/* Add Content Button */}
-            <Button onClick={onAddContent} className="rounded-lg">
+            <Button
+              onClick={onAddContent}
+              variant="ghost"
+              className="rounded-lg bg-accent"
+            >
               <Plus className="w-4 h-4" />
               <span className="font-medium">Add Content</span>
             </Button>
 
-            <Separator orientation="vertical" className="h-6" />
+            <Separator orientation="vertical" className="h-8!" />
 
             {/* Design Button */}
             <Sheet open={isDesignOpen} onOpenChange={setIsDesignOpen}>
               <SheetTrigger asChild>
-                <Button variant="secondary">
+                <Button variant="outline">
                   <Palette className="w-4 h-4" />
                   <span className="font-medium">Design</span>
                 </Button>
               </SheetTrigger>
-              <SheetContent className="w-[450px] sm:w-[500px] overflow-y-auto">
-                <SheetHeader className="pb-6">
+              <SheetContent className="w-[450px] sm:w-[500px] overflow-y-auto p-3">
+                <SheetHeader>
                   <div className="flex items-center space-x-2">
                     <Palette className="w-5 h-5 text-gray-600" />
                     <SheetTitle className="text-lg font-medium">
@@ -252,7 +263,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                   </SheetDescription>
                 </SheetHeader>
 
-                <div className="space-y-8 px-1">
+                <div className="space-y-8">
                   {/* Colors Section */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-gray-900 flex items-center space-x-2 pb-2">
@@ -260,7 +271,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                       <span>Colors</span>
                     </h3>
 
-                    <div className="space-y-4 pl-6">
+                    <div className="space-y-4 pl-2">
                       <div className="space-y-2">
                         <Label
                           htmlFor="backgroundColor"
@@ -390,7 +401,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                       <span>Typography</span>
                     </h3>
 
-                    <div className="grid grid-cols-2 gap-4 pl-6">
+                    <div className="grid grid-cols-2 gap-4 pl-2">
                       <div className="space-y-2">
                         <Label
                           htmlFor="fontFamily"
@@ -398,20 +409,23 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                         >
                           Font Family
                         </Label>
-                        <select
-                          id="fontFamily"
+                        <Select
                           value={design?.fontFamily || "Inter"}
-                          onChange={(e) =>
-                            handleDesignChange({ fontFamily: e.target.value })
+                          onValueChange={(value) =>
+                            handleDesignChange({ fontFamily: value })
                           }
-                          className="w-full h-9 px-3 border rounded text-sm bg-white"
                         >
-                          {fontOptions.map((font) => (
-                            <option key={font.value} value={font.value}>
-                              {font.label}
-                            </option>
-                          ))}
-                        </select>
+                          <SelectTrigger className="w-full h-9 text-sm">
+                            <SelectValue placeholder="Select a font" />
+                          </SelectTrigger>
+                          <SelectContent className="max-h-[200px] overflow-y-auto">
+                            {fontOptions.map((font) => (
+                              <SelectItem key={font.value} value={font.value}>
+                                {font.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
 
                       <div className="space-y-2">
@@ -444,7 +458,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                       <span>Images</span>
                     </h3>
 
-                    <div className="space-y-6 pl-6">
+                    <div className="space-y-6 pl-2">
                       {/* Background Image */}
                       <div className="space-y-3">
                         <Label className="text-sm text-gray-700">
@@ -552,11 +566,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
 
                   {/* Advanced Options */}
                   <div className="space-y-4">
-                    <h3 className="text-sm font-medium text-gray-900 pb-2">
-                      Advanced
-                    </h3>
-
-                    <div className="pl-6">
+                    <div className="pl-2">
                       <div className="space-y-2">
                         <Label
                           htmlFor="borderRadius"
@@ -583,9 +593,8 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                   <Separator />
 
                   {/* Reset Button */}
-                  <div className="pt-2 pb-4">
+                  <div className="pt-2 pb-4 px-4">
                     <Button
-                      variant="outline"
                       onClick={resetDesign}
                       className="w-full h-9 text-sm"
                     >
