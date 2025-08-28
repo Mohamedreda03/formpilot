@@ -33,6 +33,9 @@ export default function FormEditPage({
     addQuestion,
     deleteQuestion,
     reorderQuestions,
+    // New database operations
+    duplicateQuestionDB,
+    deleteQuestionDB,
   } = useFormStore();
 
   const [showQuestionTypePicker, setShowQuestionTypePicker] =
@@ -55,6 +58,26 @@ export default function FormEditPage({
 
     loadFormData();
   }, [formId, loadForm]);
+
+  // Auto-select first question when form loads and no selection exists
+  useEffect(() => {
+    if (
+      form &&
+      initialLoadComplete &&
+      !selectedQuestionId &&
+      !selectedPage &&
+      form.questions.length > 0
+    ) {
+      // Automatically select the first question
+      setSelectedQuestionId(form.questions[0].id);
+    }
+  }, [
+    form,
+    initialLoadComplete,
+    selectedQuestionId,
+    selectedPage,
+    setSelectedQuestionId,
+  ]);
 
   // Show loading only during initial load
   if (isLoading && !initialLoadComplete) {
@@ -106,28 +129,12 @@ export default function FormEditPage({
     setShowQuestionTypePicker(true);
   };
 
-  const handleQuestionDuplicate = (questionId: string) => {
+  const handleQuestionDuplicate = async (questionId: string) => {
     try {
-      const questionToDuplicate = form.questions.find(
-        (q) => q.id === questionId
-      );
-
-      if (questionToDuplicate) {
-        const duplicatedQuestion: Omit<Question, "id" | "order"> = {
-          type: questionToDuplicate.type,
-          title: questionToDuplicate.title,
-          description: questionToDuplicate.description,
-          required: questionToDuplicate.required,
-          options: questionToDuplicate.options,
-          placeholder: questionToDuplicate.placeholder,
-          maxRating: questionToDuplicate.maxRating,
-          acceptedFormats: questionToDuplicate.acceptedFormats,
-        };
-
-        addQuestion(duplicatedQuestion);
-      }
+      await duplicateQuestionDB(questionId);
     } catch (error) {
       console.error("Failed to duplicate question:", error);
+      // Error handling is already done in the store
     }
   };
 
@@ -149,11 +156,12 @@ export default function FormEditPage({
     }
   };
 
-  const handleQuestionDelete = (questionId: string) => {
+  const handleQuestionDelete = async (questionId: string) => {
     try {
-      deleteQuestion(questionId);
+      await deleteQuestionDB(questionId);
     } catch (error) {
       console.error("Failed to delete question:", error);
+      // Error handling is already done in the store
     }
   };
 

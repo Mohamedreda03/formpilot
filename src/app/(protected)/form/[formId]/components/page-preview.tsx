@@ -2,6 +2,8 @@
 
 import React from "react";
 import { useFormStore } from "@/stores/form-store";
+import { useFormDesign } from "@/hooks/use-form-design";
+import { ArrowRight, CheckCircle2 } from "lucide-react";
 
 interface PagePreviewProps {
   pageType: "intro" | "outro";
@@ -9,6 +11,13 @@ interface PagePreviewProps {
 
 export default function PagePreview({ pageType }: PagePreviewProps) {
   const { form } = useFormStore();
+  const {
+    design,
+    getContainerStyles,
+    getButtonStyles,
+    getSecondaryTextStyles,
+    getTitleStyles,
+  } = useFormDesign();
 
   if (!form) {
     return null;
@@ -20,8 +29,6 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
           title: form.introTitle || "Welcome",
           description: form.introDescription || "Please fill out this form",
           buttonText: form.introButtonText || "Start",
-          icon: "↗",
-          label: "Welcome Page",
         }
       : {
           title: form.outroTitle || "Thank You",
@@ -29,90 +36,80 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
             form.outroDescription ||
             "Your response has been submitted successfully",
           buttonText: form.outroButtonText || "Submit",
-          icon: "✓",
-          label: "Thank You Page",
         };
+
+  const containerStyles = getContainerStyles(true);
+  const buttonStyles = getButtonStyles();
 
   return (
     <div className="h-full p-4 overflow-y-auto">
-      {/* Full Screen Dashed Border Container */}
-      <div className="h-full w-full border-2 border-dashed border-gray-300 rounded-2xl bg-white flex items-center justify-center">
-        <div className="w-full max-w-3xl mx-auto px-12 space-y-12">
-          {/* Page Icon/Number with elegant styling */}
-          <div className="flex items-center space-x-6">
-            <div
-              className={`flex items-center justify-center w-12 h-12 rounded-2xl text-white font-semibold text-lg shadow-lg ${
-                pageType === "intro"
-                  ? "bg-gradient-to-br from-emerald-600 to-emerald-700"
-                  : "bg-gradient-to-br from-violet-600 to-violet-700"
-              }`}
-            >
-              {pageData.icon}
+      {/* Full Screen Dashed Border Container with Custom Design */}
+      <div
+        className="h-full w-full border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center"
+        style={containerStyles}
+      >
+        <div className="w-full max-w-2xl md:max-w-3xl lg:max-w-4xl mx-auto px-6 md:px-12 lg:px-16 space-y-8 md:space-y-10 lg:space-y-12">
+          {/* Logo Section - Show logo instead of decorative icons */}
+          {design.logoUrl ? (
+            <div className="flex justify-center">
+              <img
+                src={design.logoUrl}
+                alt="Logo"
+                className="h-20 md:h-24 w-auto object-contain"
+                style={{
+                  maxWidth: "300px",
+                  maxHeight: "120px",
+                }}
+              />
             </div>
-            <div className="flex items-center space-x-3">
-              <div
-                className={`w-8 h-0.5 bg-gradient-to-r rounded-full ${
-                  pageType === "intro"
-                    ? "from-emerald-300 to-transparent"
-                    : "from-violet-300 to-transparent"
-                }`}
-              ></div>
-              <span className="text-slate-400 font-medium">
-                {pageData.label}
-              </span>
+          ) : (
+            <div className="flex justify-center">
+              <div className="h-20 md:h-24"></div>{" "}
+              {/* Empty space if no logo */}
             </div>
-          </div>
+          )}
 
-          {/* Page Content with improved typography */}
-          <div className="space-y-8 text-center">
-            <h1 className="text-4xl md:text-5xl font-bold text-slate-900 leading-[1.1] tracking-tight">
+          {/* Page Content with responsive typography */}
+          <div className="space-y-6 md:space-y-8 text-center">
+            <h1
+              className="text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-bold leading-tight tracking-tight"
+              style={getTitleStyles()}
+            >
               {pageData.title}
             </h1>
 
             {pageData.description && (
-              <p className="text-xl text-slate-600 leading-relaxed font-medium max-w-2xl mx-auto">
+              <p
+                className="text-base md:text-lg lg:text-xl xl:text-2xl leading-relaxed font-medium max-w-xl md:max-w-2xl lg:max-w-3xl mx-auto"
+                style={getSecondaryTextStyles()}
+              >
                 {pageData.description}
               </p>
             )}
           </div>
 
           {/* Enhanced Action Button Preview */}
-          <div className="flex flex-col items-center space-y-6">
-            <div className="flex items-center space-x-4 text-slate-500 font-medium">
-              <span className="text-lg">Press</span>
-              <kbd className="px-4 py-2 bg-slate-100 rounded-xl border-2 border-slate-200 text-sm font-bold shadow-sm">
-                Enter
-              </kbd>
-              <span className="text-lg">or click</span>
-            </div>
-
+          <div className="flex flex-col items-center space-y-6 md:space-y-8">
             <button
-              className={`px-8 py-4 text-lg font-bold rounded-2xl shadow-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-4 ${
-                pageType === "intro"
-                  ? "bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white focus:ring-emerald-200"
-                  : "bg-gradient-to-r from-violet-600 to-violet-700 hover:from-violet-700 hover:to-violet-800 text-white focus:ring-violet-200"
-              }`}
+              className="group relative px-6 py-3 md:px-8 md:py-4 lg:px-10 lg:py-5 text-base md:text-lg lg:text-xl font-bold rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 disabled:cursor-not-allowed"
+              style={{
+                ...buttonStyles,
+                boxShadow: design.shadows
+                  ? "0 8px 25px rgba(0,0,0,0.15)"
+                  : "none",
+              }}
               disabled
             >
-              {pageData.buttonText}
+              <span className="flex items-center space-x-2">
+                <span>{pageData.buttonText}</span>
+                {pageType === "intro" ? (
+                  <ArrowRight className="w-5 h-5 md:w-6 md:h-6 transition-transform group-hover:translate-x-1" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 md:w-6 md:h-6" />
+                )}
+              </span>
             </button>
           </div>
-
-          {/* Page Type Badge */}
-          <div className="flex justify-center pt-4">
-            <div
-              className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-semibold ${
-                pageType === "intro"
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-violet-100 text-violet-700"
-              }`}
-            >
-              {pageType === "intro" ? "Intro Page" : "Outro Page"}
-            </div>
-          </div>
-
-          {/* Bottom spacing */}
-          <div className="pb-8"></div>
         </div>
       </div>
     </div>

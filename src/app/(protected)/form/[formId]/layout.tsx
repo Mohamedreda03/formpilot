@@ -23,6 +23,8 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
   const [formId, setFormId] = React.useState<string>("");
   const { form } = useFormStore();
 
+  console.log("form:", form);
+
   React.useEffect(() => {
     params.then((p) => setFormId(p.formId));
   }, [params]);
@@ -39,6 +41,12 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
     router.push(basePath + tab.path);
   };
 
+  const handleBackToWorkspace = () => {
+    // Navigate back to workspace - use form's workspaceId or fallback to default
+    const workspaceId = form?.workspaceId || "default";
+    router.push(`/ws/${workspaceId}`);
+  };
+
   const activeTab = getActiveTab();
   const activeTabIndex = navigationTabs.findIndex(
     (tab) => tab.id === activeTab
@@ -53,9 +61,9 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
             {/* Left Section: Back Button + Title */}
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => router.back()}
+                onClick={handleBackToWorkspace}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                title="Go back"
+                title="Back to workspace"
               >
                 <ArrowLeft className="w-6 h-6 text-gray-600" />
               </button>

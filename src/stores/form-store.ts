@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
 import { QuestionType } from "@/lib/question-types";
+import { formService } from "@/lib/appwrite-services";
+import { FormsService } from "@/lib/forms-service";
+import { formDB } from "@/lib/database";
+import { toast } from "sonner";
 
 export interface Question {
   id: string;
@@ -40,6 +44,7 @@ export interface Form {
   outroDescription?: string;
   outroButtonText?: string;
   design?: string; // JSON string containing design data
+  workspaceId?: string; // Workspace ID for navigation
 }
 
 interface FormState {
@@ -57,9 +62,12 @@ interface FormActions {
   setSelectedQuestionId: (id: string | null) => void;
   setSelectedPage: (page: "intro" | "outro" | null) => void;
   updateQuestion: (questionId: string, updates: Partial<Question>) => void;
-  addQuestion: (question: Omit<Question, "id" | "order">) => void;
+  addQuestion: (questionData: Omit<Question, "id" | "order">) => void;
   deleteQuestion: (questionId: string) => void;
-  reorderQuestions: (questions: Question[]) => void;
+  reorderQuestions: (reorderedQuestions: Question[]) => void;
+  // New database operations
+  duplicateQuestionDB: (questionId: string) => Promise<void>;
+  deleteQuestionDB: (questionId: string) => Promise<void>;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
 }
@@ -81,52 +89,47 @@ export const useFormStore = create<FormStore>()(
         loadForm: async (formId) => {
           set({ isLoading: true, error: null });
           try {
-            // Add a small delay to simulate API call but prevent race conditions
-            await new Promise((resolve) => setTimeout(resolve, 100));
+            // Load form from database
+            const dbForm = await formDB.getForm(formId);
 
-            const mockForm: Form = {
-              id: formId,
-              title: "Sample Form",
-              description: "This is a sample form",
-              questions: [
-                {
-                  id: "q1",
-                  title: "What's your name?",
-                  description: "",
-                  type: "text",
-                  order: 1,
-                  required: true,
-                  placeholder: "Enter your name",
-                },
-                {
-                  id: "q2",
-                  title: "How would you rate our service?",
-                  description: "",
-                  type: "rating",
-                  order: 2,
-                  required: false,
-                  maxRating: 5,
-                },
-              ],
-              pages: [],
+            if (!dbForm) {
+              throw new Error("Form not found");
+            }
+
+            // Parse questions from JSON string
+            let questions: Question[] = [];
+            try {
+              questions = dbForm.questions ? JSON.parse(dbForm.questions) : [];
+            } catch (parseError) {
+              console.error("Failed to parse questions:", parseError);
+              questions = [];
+            }
+
+            // Transform database form to our Form interface
+            const form: Form = {
+              id: dbForm.$id || formId,
+              title: dbForm.title,
+              description: dbForm.description,
+              questions: questions,
+              pages: [], // Pages not implemented yet
               settings: {
                 allowAnonymous: true,
                 requireEmail: false,
                 multipleSubmissions: false,
                 showProgress: true,
               },
-              introTitle: "Welcome to our survey",
-              introDescription:
-                "We'd love to hear your thoughts. Please take a few minutes to complete this survey.",
-              introButtonText: "Start",
-              outroTitle: "Thank you for your time",
-              outroDescription:
-                "Your responses have been recorded. We appreciate your feedback!",
-              outroButtonText: "Submit",
+              introTitle: dbForm.introTitle,
+              introDescription: dbForm.introDescription,
+              introButtonText: dbForm.introButtonText,
+              outroTitle: dbForm.outroTitle,
+              outroDescription: dbForm.outroDescription,
+              outroButtonText: dbForm.outroButtonText,
+              workspaceId: dbForm.workspaceId,
+              design: dbForm.design,
             };
 
             // Set form and clear loading/error states
-            set({ form: mockForm, isLoading: false, error: null });
+            set({ form, isLoading: false, error: null });
           } catch (error) {
             console.error("Error loading form:", error);
             set({
@@ -139,9 +142,33 @@ export const useFormStore = create<FormStore>()(
         },
 
         updateForm: (updates) =>
-          set((state) => ({
-            form: state.form ? { ...state.form, ...updates } : null,
-          })),
+          set((state) => {
+            if (!state.form) return state;
+
+            const updatedForm = { ...state.form, ...updates };
+
+            // Save to database in the background
+            if (state.form.id) {
+              // Convert questions to JSON string if needed for database
+              const dbUpdates = { ...updates };
+              if (dbUpdates.questions) {
+                (dbUpdates as any).questions = JSON.stringify(
+                  dbUpdates.questions
+                );
+              }
+
+              formService
+                .updateForm(state.form.id, dbUpdates as any)
+                .catch((error) => {
+                  console.error(
+                    "Failed to save form updates to database:",
+                    error
+                  );
+                });
+            }
+
+            return { form: updatedForm };
+          }),
 
         setSelectedQuestionId: (id) => set({ selectedQuestionId: id }),
 
@@ -186,12 +213,20 @@ export const useFormStore = create<FormStore>()(
               .filter((q) => q.id !== questionId)
               .map((q, index) => ({ ...q, order: index + 1 }));
 
+            // If deleting the currently selected question
+            const wasSelectedQuestionDeleted =
+              state.selectedQuestionId === questionId;
+            let newSelectedQuestionId = state.selectedQuestionId;
+
+            if (wasSelectedQuestionDeleted) {
+              // Auto-select first available question, or null if no questions remain
+              newSelectedQuestionId =
+                filteredQuestions.length > 0 ? filteredQuestions[0].id : null;
+            }
+
             return {
               form: { ...state.form, questions: filteredQuestions },
-              selectedQuestionId:
-                state.selectedQuestionId === questionId
-                  ? null
-                  : state.selectedQuestionId,
+              selectedQuestionId: newSelectedQuestionId,
             };
           }),
 
@@ -206,6 +241,20 @@ export const useFormStore = create<FormStore>()(
               })
             );
 
+            // Save to database in the background
+            if (state.form.id) {
+              formService
+                .updateForm(state.form.id, {
+                  questions: JSON.stringify(questionsWithUpdatedOrder),
+                } as any)
+                .catch((error) => {
+                  console.error(
+                    "Failed to save question order to database:",
+                    error
+                  );
+                });
+            }
+
             return {
               form: { ...state.form, questions: questionsWithUpdatedOrder },
             };
@@ -214,6 +263,131 @@ export const useFormStore = create<FormStore>()(
         setLoading: (loading) => set({ isLoading: loading }),
 
         setError: (error) => set({ error }),
+
+        // Database operations for questions
+        duplicateQuestionDB: async (questionId) => {
+          set({ isLoading: true, error: null });
+          try {
+            const state = useFormStore.getState();
+            if (!state.form) {
+              throw new Error("No form loaded");
+            }
+
+            const questionToDuplicate = state.form.questions.find(
+              (q) => q.id === questionId
+            );
+
+            if (!questionToDuplicate) {
+              throw new Error("Question not found");
+            }
+
+            // Create duplicated question data
+            const duplicatedQuestion: Omit<Question, "id" | "order"> = {
+              type: questionToDuplicate.type,
+              title: `${questionToDuplicate.title} (Copy)`,
+              description: questionToDuplicate.description,
+              required: questionToDuplicate.required,
+              options: questionToDuplicate.options,
+              placeholder: questionToDuplicate.placeholder,
+              maxRating: questionToDuplicate.maxRating,
+              acceptedFormats: questionToDuplicate.acceptedFormats,
+            };
+
+            // Add new question to local state first
+            const newQuestion: Question = {
+              ...duplicatedQuestion,
+              id: `q_${Date.now()}`,
+              order: state.form.questions.length + 1,
+            };
+
+            const updatedQuestions = [...state.form.questions, newQuestion];
+
+            // Update local state
+            set((state) => ({
+              form: state.form
+                ? { ...state.form, questions: updatedQuestions }
+                : null,
+              selectedQuestionId: newQuestion.id, // Select the new question
+            }));
+
+            // Update database
+            await formService.updateForm(state.form.id, {
+              questions: JSON.stringify(updatedQuestions),
+            });
+
+            set({ isLoading: false });
+            toast.success("Question duplicated successfully!");
+          } catch (error) {
+            console.error("Failed to duplicate question:", error);
+            set({
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to duplicate question",
+              isLoading: false,
+            });
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Failed to duplicate question. Please try again."
+            );
+          }
+        },
+
+        deleteQuestionDB: async (questionId) => {
+          set({ isLoading: true, error: null });
+          try {
+            const state = useFormStore.getState();
+            if (!state.form) {
+              throw new Error("No form loaded");
+            }
+
+            const filteredQuestions = state.form.questions
+              .filter((q) => q.id !== questionId)
+              .map((q, index) => ({ ...q, order: index + 1 }));
+
+            // If deleting the currently selected question
+            const wasSelectedQuestionDeleted =
+              state.selectedQuestionId === questionId;
+            let newSelectedQuestionId = state.selectedQuestionId;
+
+            if (wasSelectedQuestionDeleted) {
+              // Auto-select first available question, or null if no questions remain
+              newSelectedQuestionId =
+                filteredQuestions.length > 0 ? filteredQuestions[0].id : null;
+            }
+
+            // Update local state
+            set((state) => ({
+              form: state.form
+                ? { ...state.form, questions: filteredQuestions }
+                : null,
+              selectedQuestionId: newSelectedQuestionId,
+            }));
+
+            // Update database
+            await formService.updateForm(state.form.id, {
+              questions: JSON.stringify(filteredQuestions),
+            });
+
+            set({ isLoading: false });
+            toast.success("Question deleted successfully!");
+          } catch (error) {
+            console.error("Failed to delete question:", error);
+            set({
+              error:
+                error instanceof Error
+                  ? error.message
+                  : "Failed to delete question",
+              isLoading: false,
+            });
+            toast.error(
+              error instanceof Error
+                ? error.message
+                : "Failed to delete question. Please try again."
+            );
+          }
+        },
       }),
       {
         name: "form-store",
