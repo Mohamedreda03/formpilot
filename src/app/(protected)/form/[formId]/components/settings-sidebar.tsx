@@ -6,7 +6,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2, ChevronDown } from "lucide-react";
+import {
+  Plus,
+  Trash2,
+  ChevronDown,
+  Upload,
+  X,
+  Image as ImageIcon,
+} from "lucide-react";
+import { uploadImage, deleteImage } from "@/lib/image-upload";
+import { toast } from "sonner";
+import Image from "next/image";
+import { cleanImageUrl } from "@/lib/utils";
 import { useFormStore } from "@/stores/form-store";
 import {
   QUESTION_TYPES,
@@ -24,6 +35,7 @@ import { cn } from "@/lib/utils";
 export default function SettingsSidebar() {
   const { form, selectedQuestionId, selectedPage, updateForm, updateQuestion } =
     useFormStore();
+  const [uploading, setUploading] = useState(false);
 
   if (!form) {
     return (
@@ -40,6 +52,60 @@ export default function SettingsSidebar() {
   const handleQuestionUpdate = (updates: any) => {
     if (selectedQuestionId) {
       updateQuestion(selectedQuestionId, updates);
+    }
+  };
+
+  const handleImageUpload = async (file: File) => {
+    if (!selectedQuestion) return;
+
+    try {
+      setUploading(true);
+
+      // Delete old image if exists
+      if (selectedQuestion.imageUrl) {
+        try {
+          await deleteImage(selectedQuestion.imageUrl);
+        } catch (error) {
+          console.warn("Failed to delete old image:", error);
+        }
+      }
+
+      // Upload new image
+      const imageUrl = await uploadImage(file);
+
+      // Clean URL - remove any existing timestamps
+      const cleanUrl = cleanImageUrl(imageUrl);
+
+      // Update question with new image URL
+      handleQuestionUpdate({ imageUrl: cleanUrl });
+
+      toast.success("Image uploaded and saved successfully!");
+    } catch (error) {
+      console.error("Image upload failed:", error);
+      toast.error("Failed to upload image. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleImageDelete = async () => {
+    if (!selectedQuestion?.imageUrl) return;
+
+    try {
+      setUploading(true);
+
+      // Delete from storage
+      await deleteImage(selectedQuestion.imageUrl);
+
+      // Remove from question and save to database
+      handleQuestionUpdate({ imageUrl: undefined });
+
+      toast.success("Image deleted and saved successfully!");
+    } catch (error) {
+      console.error("Image deletion failed:", error);
+      toast.error("Failed to delete image. Please try again.");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -304,6 +370,109 @@ export default function SettingsSidebar() {
               />
             </div>
           )}
+
+          {/* Question Image Section */}
+          <div className="space-y-3 pt-4 border-t border-gray-100">
+            <div className="flex items-center space-x-2">
+              <ImageIcon className="h-4 w-4 text-gray-600" />
+              <Label className="text-sm font-medium text-gray-700">
+                Question Image
+              </Label>
+            </div>
+
+            {selectedQuestion.imageUrl ? (
+              <div className="space-y-3">
+                {/* Image Preview */}
+                <div className="relative group">
+                  <div className="relative w-full h-32 rounded-lg border border-gray-200 overflow-hidden bg-gray-50">
+                    {uploading ? (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
+                        <div className="text-center">
+                          <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                          <p className="text-xs text-gray-600">Uploading...</p>
+                        </div>
+                      </div>
+                    ) : selectedQuestion.imageUrl ? (
+                      <Image
+                        key={selectedQuestion.imageUrl}
+                        src={selectedQuestion.imageUrl}
+                        alt="Question image"
+                        fill
+                        className="object-cover"
+                        sizes="272px"
+                        onError={(e) => {
+                          // Silent error handling - image loads correctly but Next.js might complain
+                        }}
+                        unoptimized={true}
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center bg-gray-50">
+                        <div className="text-center text-gray-400">
+                          <ImageIcon className="w-8 h-8 mx-auto mb-2" />
+                          <p className="text-xs">No image</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleImageDelete}
+                    disabled={uploading}
+                    className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600 disabled:opacity-50"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+
+                {/* Replace Image Button */}
+                <div className="relative">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) handleImageUpload(file);
+                    }}
+                    className="hidden"
+                    id="replace-image-upload"
+                    disabled={uploading}
+                  />
+                  <label
+                    htmlFor="replace-image-upload"
+                    className="flex items-center justify-center w-full p-2 border border-gray-200 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 mr-2 text-gray-500" />
+                    <span className="text-sm text-gray-600">
+                      {uploading ? "Replacing..." : "Replace Image"}
+                    </span>
+                  </label>
+                </div>
+              </div>
+            ) : (
+              /* Upload New Image */
+              <div className="relative">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleImageUpload(file);
+                  }}
+                  className="hidden"
+                  id="question-image-upload"
+                  disabled={uploading}
+                />
+                <label
+                  htmlFor="question-image-upload"
+                  className="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-gray-400 transition-colors"
+                >
+                  <Upload className="w-6 h-6 text-gray-400 mb-1" />
+                  <span className="text-xs text-gray-600">
+                    {uploading ? "Uploading..." : "Add image to question"}
+                  </span>
+                </label>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );

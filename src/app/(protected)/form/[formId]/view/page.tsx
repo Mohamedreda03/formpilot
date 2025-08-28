@@ -6,6 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Edit2, Share2, BarChart3 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useFormStore } from "@/stores/form-store";
+import Image from "next/image";
 
 // Mock data - replace with actual data fetching
 const mockForm = {
@@ -20,6 +22,8 @@ const mockForm = {
       id: "1",
       type: "text",
       title: "What is your full name?",
+      description:
+        "Please enter your complete name as it appears on official documents",
       required: true,
     },
     {
@@ -49,6 +53,10 @@ export default function FormViewPage({
   params: { formId: string };
 }) {
   const router = useRouter();
+  const { form } = useFormStore();
+
+  // Use real form data or fallback to mock for preview
+  const displayForm = form || mockForm;
 
   const renderQuestionPreview = (question: any) => {
     switch (question.type) {
@@ -162,14 +170,40 @@ export default function FormViewPage({
           </CardHeader>
 
           <CardContent className="space-y-6">
-            {mockForm.questions.map((question, index) => (
-              <div key={question.id} className="space-y-2">
+            {displayForm.questions.map((question, index) => (
+              <div key={question.id} className="space-y-3">
                 <label className="block text-sm font-medium">
                   {index + 1}. {question.title}
                   {question.required && (
                     <span className="text-destructive ml-1">*</span>
                   )}
                 </label>
+
+                {/* Question Description */}
+                {(question as any).description && (
+                  <p className="text-sm text-muted-foreground">
+                    {(question as any).description}
+                  </p>
+                )}
+
+                {/* Question Image */}
+                {(question as any).imageUrl && (
+                  <div className="w-full max-w-md">
+                    <div className="relative w-full aspect-[4/3] max-h-48 rounded-lg overflow-hidden">
+                      <Image
+                        src={(question as any).imageUrl}
+                        alt="Question illustration"
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 90vw, 448px"
+                        onError={(e) => {
+                          // Silent error handling - no console.error
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {renderQuestionPreview(question)}
               </div>
             ))}

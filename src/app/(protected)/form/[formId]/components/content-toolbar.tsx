@@ -1,11 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
+import { useDebouncedCallback } from "use-debounce";
+import Image from "next/image";
 import {
   Plus,
   Palette,
   Type,
-  Image,
+  Image as ImageIcon,
   Paintbrush,
   Upload,
   X,
@@ -32,20 +34,149 @@ interface ContentToolbarProps {
 
 const fontOptions = [
   { value: "Inter", label: "Inter" },
-  { value: "Arial", label: "Arial" },
-  { value: "Helvetica", label: "Helvetica" },
-  { value: "Georgia", label: "Georgia" },
-  { value: "Times New Roman", label: "Times New Roman" },
   { value: "Roboto", label: "Roboto" },
   { value: "Open Sans", label: "Open Sans" },
-  { value: "Poppins", label: "Poppins" },
+  { value: "Lato", label: "Lato" },
   { value: "Montserrat", label: "Montserrat" },
+  { value: "Nunito", label: "Nunito" },
+  { value: "Poppins", label: "Poppins" },
+  { value: "Source Sans Pro", label: "Source Sans Pro" },
+  { value: "Ubuntu", label: "Ubuntu" },
+  { value: "Raleway", label: "Raleway" },
+  { value: "Merriweather", label: "Merriweather" },
+  { value: "PT Sans", label: "PT Sans" },
+  { value: "Oswald", label: "Oswald" },
+  { value: "Playfair Display", label: "Playfair Display" },
+  { value: "Fira Sans", label: "Fira Sans" },
 ];
 
 export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
-  const { design, updateDesign, resetDesign } = useFormDesign();
+  const { design, updateDesign, resetDesign, applyDesignToDocument } =
+    useFormDesign();
   const [isDesignOpen, setIsDesignOpen] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
+
+  // Local state for colors to prevent lag during color picking
+  const [localColors, setLocalColors] = useState({
+    backgroundColor: design?.backgroundColor || "#ffffff",
+    primaryColor: design?.primaryColor || "#1e293b",
+    textColor: design?.textColor || "#1f2937",
+    secondaryColor: design?.secondaryColor || "#64748b",
+    accentColor: design?.accentColor || "#9ca3af",
+  });
+
+  // Local state for font size to prevent keyboard navigation issues
+  const [localFontSize, setLocalFontSize] = useState(design?.fontSize || "16");
+
+  // Update local colors when design changes (from external sources)
+  React.useEffect(() => {
+    if (design) {
+      setLocalColors({
+        backgroundColor: design.backgroundColor || "#ffffff",
+        primaryColor: design.primaryColor || "#1e293b",
+        textColor: design.textColor || "#1f2937",
+        secondaryColor: design.secondaryColor || "#64748b",
+        accentColor: design.accentColor || "#9ca3af",
+      });
+      setLocalFontSize(design.fontSize || "16");
+    }
+  }, [
+    design?.backgroundColor,
+    design?.primaryColor,
+    design?.textColor,
+    design?.secondaryColor,
+    design?.accentColor,
+    design?.fontSize,
+  ]);
+
+  // Debounced color update - only saves to database after user stops changing
+  const debouncedColorUpdate = useDebouncedCallback(
+    (colorUpdates: Partial<typeof localColors>) => {
+      updateDesign(colorUpdates);
+    },
+    300 // Longer delay for database save
+  );
+
+  // Debounced font size update
+  const debouncedFontSizeUpdate = useDebouncedCallback((fontSize: string) => {
+    updateDesign({ fontSize });
+  }, 300);
+
+  // RAF-based visual update for the smoothest possible performance
+  const rafRef = React.useRef<number | null>(null);
+  const pendingUpdateRef = React.useRef<{
+    colorKey: keyof typeof localColors;
+    value: string;
+  } | null>(null);
+
+  const scheduleVisualUpdate = useCallback(
+    (colorKey: keyof typeof localColors, value: string) => {
+      pendingUpdateRef.current = { colorKey, value };
+
+      if (rafRef.current !== null) return; // Already scheduled
+
+      rafRef.current = requestAnimationFrame(() => {
+        const pending = pendingUpdateRef.current;
+        if (pending) {
+          applyDesignToDocument({
+            ...design,
+            [pending.colorKey]: pending.value,
+          });
+        }
+        rafRef.current = null;
+        pendingUpdateRef.current = null;
+      });
+    },
+    [design, applyDesignToDocument]
+  );
+
+  // Cleanup RAF on unmount
+  React.useEffect(() => {
+    return () => {
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+      }
+    };
+  }, []);
+
+  const handleColorChange = useCallback(
+    (colorKey: keyof typeof localColors, value: string) => {
+      // Skip if the value hasn't actually changed or is invalid
+      if (!value || localColors[colorKey] === value) return;
+
+      // Update local state immediately for instant input feedback
+      setLocalColors((prev) => ({ ...prev, [colorKey]: value }));
+
+      // RAF-based visual update for smoothest performance
+      scheduleVisualUpdate(colorKey, value);
+
+      // Debounced save to database
+      debouncedColorUpdate({ [colorKey]: value });
+    },
+    [localColors, scheduleVisualUpdate, debouncedColorUpdate]
+  );
+
+  const handleFontSizeChange = useCallback(
+    (value: string) => {
+      setLocalFontSize(value);
+      debouncedFontSizeUpdate(value);
+    },
+    [debouncedFontSizeUpdate]
+  );
+
+  const handleFontSizeKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+        // Wait for the input value to update, then update our local state
+        setTimeout(() => {
+          const target = e.target as HTMLInputElement;
+          setLocalFontSize(target.value);
+          debouncedFontSizeUpdate(target.value);
+        }, 0);
+      }
+    },
+    [debouncedFontSizeUpdate]
+  );
 
   const handleDesignChange = (updates: Partial<typeof design>) => {
     updateDesign(updates);
@@ -141,20 +272,22 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                           <Input
                             id="backgroundColor"
                             type="color"
-                            value={design.backgroundColor}
+                            value={localColors.backgroundColor}
                             onChange={(e) =>
-                              handleDesignChange({
-                                backgroundColor: e.target.value,
-                              })
+                              handleColorChange(
+                                "backgroundColor",
+                                e.target.value
+                              )
                             }
                             className="w-10 h-9 p-1 border rounded cursor-pointer"
                           />
                           <Input
-                            value={design.backgroundColor}
+                            value={localColors.backgroundColor}
                             onChange={(e) =>
-                              handleDesignChange({
-                                backgroundColor: e.target.value,
-                              })
+                              handleColorChange(
+                                "backgroundColor",
+                                e.target.value
+                              )
                             }
                             className="flex-1 h-9 text-sm"
                             placeholder="#ffffff"
@@ -173,20 +306,16 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                           <Input
                             id="primaryColor"
                             type="color"
-                            value={design.primaryColor}
+                            value={localColors.primaryColor}
                             onChange={(e) =>
-                              handleDesignChange({
-                                primaryColor: e.target.value,
-                              })
+                              handleColorChange("primaryColor", e.target.value)
                             }
                             className="w-10 h-9 p-1 border rounded cursor-pointer"
                           />
                           <Input
-                            value={design.primaryColor}
+                            value={localColors.primaryColor}
                             onChange={(e) =>
-                              handleDesignChange({
-                                primaryColor: e.target.value,
-                              })
+                              handleColorChange("primaryColor", e.target.value)
                             }
                             className="flex-1 h-9 text-sm"
                             placeholder="#1e293b"
@@ -205,19 +334,47 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                           <Input
                             id="textColor"
                             type="color"
-                            value={design.textColor}
+                            value={localColors.textColor}
                             onChange={(e) =>
-                              handleDesignChange({ textColor: e.target.value })
+                              handleColorChange("textColor", e.target.value)
                             }
                             className="w-10 h-9 p-1 border rounded cursor-pointer"
                           />
                           <Input
-                            value={design.textColor}
+                            value={localColors.textColor}
                             onChange={(e) =>
-                              handleDesignChange({ textColor: e.target.value })
+                              handleColorChange("textColor", e.target.value)
                             }
                             className="flex-1 h-9 text-sm"
                             placeholder="#1f2937"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="accentColor"
+                          className="text-sm text-gray-700"
+                        >
+                          Accent Color (Descriptions & Placeholders)
+                        </Label>
+                        <div className="flex items-center space-x-3">
+                          <Input
+                            id="accentColor"
+                            type="color"
+                            value={localColors.accentColor}
+                            onChange={(e) =>
+                              handleColorChange("accentColor", e.target.value)
+                            }
+                            className="w-10 h-9 p-1 border rounded cursor-pointer"
+                          />
+                          <Input
+                            value={localColors.accentColor}
+                            onChange={(e) =>
+                              handleColorChange("accentColor", e.target.value)
+                            }
+                            className="flex-1 h-9 text-sm"
+                            placeholder="#9ca3af"
                           />
                         </div>
                       </div>
@@ -243,7 +400,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                         </Label>
                         <select
                           id="fontFamily"
-                          value={design.fontFamily}
+                          value={design?.fontFamily || "Inter"}
                           onChange={(e) =>
                             handleDesignChange({ fontFamily: e.target.value })
                           }
@@ -269,10 +426,9 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                           type="number"
                           min="12"
                           max="32"
-                          value={design.fontSize}
-                          onChange={(e) =>
-                            handleDesignChange({ fontSize: e.target.value })
-                          }
+                          value={localFontSize}
+                          onChange={(e) => handleFontSizeChange(e.target.value)}
+                          onKeyDown={handleFontSizeKeyDown}
                           className="h-9 text-sm"
                         />
                       </div>
@@ -284,7 +440,7 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                   {/* Images Section */}
                   <div className="space-y-4">
                     <h3 className="text-sm font-medium text-gray-900 flex items-center space-x-2 pb-2">
-                      <Image className="w-4 h-4" />
+                      <ImageIcon className="w-4 h-4" />
                       <span>Images</span>
                     </h3>
 
@@ -296,11 +452,15 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                         </Label>
                         {design.backgroundImage ? (
                           <div className="relative group">
-                            <img
-                              src={design.backgroundImage}
-                              alt="Background preview"
-                              className="w-full h-32 object-cover rounded border"
-                            />
+                            <div className="relative w-full h-32 rounded border overflow-hidden">
+                              <Image
+                                src={design.backgroundImage}
+                                alt="Background preview"
+                                fill
+                                className="object-cover"
+                                sizes="256px"
+                              />
+                            </div>
                             <button
                               onClick={() => handleRemoveImage("background")}
                               className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
@@ -343,11 +503,15 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
                         <Label className="text-sm text-gray-700">Logo</Label>
                         {design.logoUrl ? (
                           <div className="relative group w-32">
-                            <img
-                              src={design.logoUrl}
-                              alt="Logo preview"
-                              className="w-full h-20 object-contain rounded border bg-gray-50"
-                            />
+                            <div className="relative w-full h-20 rounded border bg-gray-50 overflow-hidden">
+                              <Image
+                                src={design.logoUrl}
+                                alt="Logo preview"
+                                fill
+                                className="object-contain"
+                                sizes="128px"
+                              />
+                            </div>
                             <button
                               onClick={() => handleRemoveImage("logo")}
                               className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded hover:bg-red-600 transition-colors opacity-0 group-hover:opacity-100"
@@ -394,18 +558,24 @@ export default function ContentToolbar({ onAddContent }: ContentToolbarProps) {
 
                     <div className="pl-6">
                       <div className="space-y-2">
-                        <Label className="text-sm text-gray-700">Shadows</Label>
-                        <div className="flex items-center space-x-2 pt-1">
-                          <Switch
-                            checked={design.shadows}
-                            onCheckedChange={(checked) =>
-                              handleDesignChange({ shadows: checked })
-                            }
-                          />
-                          <span className="text-sm text-gray-600">
-                            Enable shadows
-                          </span>
-                        </div>
+                        <Label
+                          htmlFor="borderRadius"
+                          className="text-sm text-gray-700"
+                        >
+                          Border Radius (px)
+                        </Label>
+                        <Input
+                          id="borderRadius"
+                          type="number"
+                          min="0"
+                          max="30"
+                          value={design?.borderRadius || "8"}
+                          onChange={(e) =>
+                            handleDesignChange({ borderRadius: e.target.value })
+                          }
+                          className="h-9 text-sm"
+                          placeholder="8"
+                        />
                       </div>
                     </div>
                   </div>

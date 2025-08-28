@@ -4,6 +4,7 @@ import React from "react";
 import { useFormStore } from "@/stores/form-store";
 import { useFormDesign } from "@/hooks/use-form-design";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
+import Image from "next/image";
 
 interface PagePreviewProps {
   pageType: "intro" | "outro";
@@ -52,20 +53,19 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
           {/* Logo Section - Show logo instead of decorative icons */}
           {design.logoUrl ? (
             <div className="flex justify-center">
-              <img
-                src={design.logoUrl}
-                alt="Logo"
-                className="h-20 md:h-24 w-auto object-contain"
-                style={{
-                  maxWidth: "300px",
-                  maxHeight: "120px",
-                }}
-              />
+              <div className="relative h-20 md:h-24 w-72 md:w-80">
+                <Image
+                  src={design.logoUrl}
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 288px, 320px"
+                />
+              </div>
             </div>
           ) : (
             <div className="flex justify-center">
-              <div className="h-20 md:h-24"></div>{" "}
-              {/* Empty space if no logo */}
+              <div className="h-20 md:h-24"></div>
             </div>
           )}
 
@@ -92,12 +92,7 @@ export default function PagePreview({ pageType }: PagePreviewProps) {
           <div className="flex flex-col items-center space-y-6 md:space-y-8">
             <button
               className="group relative px-6 py-3 md:px-8 md:py-4 lg:px-10 lg:py-5 text-base md:text-lg lg:text-xl font-bold rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 hover:shadow-2xl focus:outline-none focus:ring-4 disabled:cursor-not-allowed"
-              style={{
-                ...buttonStyles,
-                boxShadow: design.shadows
-                  ? "0 8px 25px rgba(0,0,0,0.15)"
-                  : "none",
-              }}
+              style={buttonStyles}
               disabled
             >
               <span className="flex items-center space-x-2">

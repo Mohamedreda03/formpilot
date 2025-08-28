@@ -4,6 +4,7 @@ import { QuestionType } from "@/lib/question-types";
 import { formService } from "@/lib/appwrite-services";
 import { FormsService } from "@/lib/forms-service";
 import { formDB } from "@/lib/database";
+import { cleanImageUrl } from "@/lib/utils";
 import { toast } from "sonner";
 
 export interface Question {
@@ -17,6 +18,7 @@ export interface Question {
   placeholder?: string;
   maxRating?: number;
   acceptedFormats?: string;
+  imageUrl?: string;
 }
 
 export interface FormPage {
@@ -178,12 +180,32 @@ export const useFormStore = create<FormStore>()(
           set((state) => {
             if (!state.form) return state;
 
+            // Clean imageUrl if it exists in updates
+            const cleanUpdates = { ...updates };
+            if (
+              cleanUpdates.imageUrl &&
+              typeof cleanUpdates.imageUrl === "string"
+            ) {
+              cleanUpdates.imageUrl = cleanImageUrl(cleanUpdates.imageUrl);
+            }
+
             const updatedQuestions = state.form.questions.map((q) =>
-              q.id === questionId ? { ...q, ...updates } : q
+              q.id === questionId ? { ...q, ...cleanUpdates } : q
             );
 
+            const updatedForm = { ...state.form, questions: updatedQuestions };
+
+            // Save to database
+            formService
+              .updateForm(state.form.id, {
+                questions: JSON.stringify(updatedQuestions),
+              })
+              .catch((error) => {
+                console.error("Failed to save question update:", error);
+              });
+
             return {
-              form: { ...state.form, questions: updatedQuestions },
+              form: updatedForm,
             };
           }),
 

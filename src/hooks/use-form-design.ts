@@ -10,9 +10,10 @@ export interface FormDesign {
   primaryColor: string;
   secondaryColor: string;
   textColor: string;
+  accentColor: string;
   fontFamily: string;
   fontSize: string;
-  shadows: boolean;
+  borderRadius: string;
   logoUrl?: string;
 }
 
@@ -21,9 +22,10 @@ export const defaultDesign: FormDesign = {
   primaryColor: "#1e293b",
   secondaryColor: "#64748b",
   textColor: "#1f2937",
+  accentColor: "#9ca3af",
   fontFamily: "Inter",
   fontSize: "16",
-  shadows: true,
+  borderRadius: "8",
 };
 
 export function useFormDesign() {
@@ -82,9 +84,13 @@ export function useFormDesign() {
     root.style.setProperty("--form-primary-color", designData.primaryColor);
     root.style.setProperty("--form-secondary-color", designData.secondaryColor);
     root.style.setProperty("--form-text-color", designData.textColor);
+    root.style.setProperty("--form-accent-color", designData.accentColor);
     root.style.setProperty("--form-font-family", designData.fontFamily);
     root.style.setProperty("--form-font-size", `${designData.fontSize}px`);
-    root.style.setProperty("--form-shadows", designData.shadows ? "1" : "0");
+    root.style.setProperty(
+      "--form-border-radius",
+      `${designData.borderRadius}px`
+    );
 
     if (designData.backgroundImage) {
       root.style.setProperty(
@@ -107,7 +113,6 @@ export function useFormDesign() {
         : undefined,
       backgroundSize: design.backgroundImage ? "cover" : undefined,
       backgroundPosition: design.backgroundImage ? "center" : undefined,
-      boxShadow: design.shadows ? "0 4px 6px -1px rgb(0 0 0 / 0.1)" : "none",
     };
   };
 
@@ -125,15 +130,14 @@ export function useFormDesign() {
         withBackground && design.backgroundImage ? "cover" : undefined,
       backgroundPosition:
         withBackground && design.backgroundImage ? "center" : undefined,
-      boxShadow: design.shadows ? "0 4px 6px -1px rgb(0 0 0 / 0.1)" : "none",
     };
   };
 
   const getInputStyles = (): React.CSSProperties => {
     return {
-      borderColor: design.primaryColor,
+      // Remove borderColor to avoid conflict - will be set individually
       fontFamily: design.fontFamily,
-      fontSize: `${design.fontSize}px`, // Apply font size to inputs
+      fontSize: `${design.fontSize}px`,
       backgroundColor: design.backgroundColor,
       color: design.textColor,
     };
@@ -145,7 +149,6 @@ export function useFormDesign() {
       color: design.backgroundColor,
       fontFamily: design.fontFamily,
       fontSize: `${design.fontSize}px`,
-      boxShadow: design.shadows ? "0 2px 4px rgba(0,0,0,0.1)" : "none",
     };
   };
 
@@ -157,11 +160,28 @@ export function useFormDesign() {
     };
   };
 
+  const getAccentTextStyles = (): React.CSSProperties => {
+    return {
+      color: design.accentColor,
+      fontFamily: design.fontFamily,
+      fontSize: `${parseInt(design.fontSize) - 1}px`,
+    };
+  };
+
   const getTitleStyles = (): React.CSSProperties => {
     return {
       color: design.textColor,
       fontFamily: design.fontFamily,
       fontSize: `${parseInt(design.fontSize) + 12}px`, // Title larger than base font size
+    };
+  };
+
+  const getNumberStyles = (): React.CSSProperties => {
+    return {
+      backgroundColor: design.primaryColor,
+      color: design.backgroundColor,
+      fontFamily: design.fontFamily,
+      borderRadius: `${design.borderRadius}px`, // Border radius only for numbers
     };
   };
 
@@ -174,7 +194,9 @@ export function useFormDesign() {
     getInputStyles,
     getButtonStyles,
     getSecondaryTextStyles,
+    getAccentTextStyles,
     getTitleStyles,
+    getNumberStyles,
     applyDesignToDocument,
   };
 }

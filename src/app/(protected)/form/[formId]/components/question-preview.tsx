@@ -1,12 +1,67 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { Question } from "@/stores/form-store";
 import { useFormDesign } from "@/hooks/use-form-design";
+import Image from "next/image";
 
 interface QuestionPreviewProps {
   question: Question;
 }
+
+// Fallback Image Component - Silent Error Handling
+const FallbackImage = ({
+  src,
+  alt,
+  className,
+  style,
+}: {
+  src: string;
+  alt: string;
+  className?: string;
+  style?: React.CSSProperties;
+}) => {
+  const [fallbackError, setFallbackError] = useState(false);
+
+  if (fallbackError) {
+    return (
+      <div
+        className="w-full h-full bg-gray-50 border border-gray-200 flex items-center justify-center"
+        style={style}
+      >
+        <div className="text-center text-gray-400">
+          <svg
+            className="w-6 h-6 mx-auto mb-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={1}
+              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
+          <p className="text-xs">Image unavailable</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={src}
+      alt={alt}
+      className={className}
+      style={style}
+      onError={(e) => {
+        e.preventDefault();
+        setFallbackError(true);
+      }}
+    />
+  );
+};
 
 export default function QuestionPreview({ question }: QuestionPreviewProps) {
   const {
@@ -15,8 +70,13 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
     getInputStyles,
     getButtonStyles,
     getSecondaryTextStyles,
+    getAccentTextStyles,
     getTitleStyles,
+    getNumberStyles,
   } = useFormDesign();
+
+  const [imageError, setImageError] = useState(false);
+  const [logoError, setLogoError] = useState(false);
 
   const renderQuestionInput = () => {
     const inputStyles = getInputStyles();
@@ -28,14 +88,11 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
           <input
             type="text"
             placeholder={question.placeholder || "Type your answer here..."}
-            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
+            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300 form-input"
             style={{
               ...inputStyles,
-              borderTop: "none",
-              borderLeft: "none",
-              borderRight: "none",
-              borderBottomWidth: "3px",
-              borderBottomColor: design.primaryColor,
+              border: "none",
+              borderBottom: `3px solid ${design.primaryColor}`,
             }}
             disabled
           />
@@ -48,14 +105,11 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               question.placeholder || "Type your detailed answer here..."
             }
             rows={4}
-            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 resize-none font-medium transition-colors duration-300"
+            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent resize-none font-medium transition-colors duration-300 form-textarea"
             style={{
               ...inputStyles,
-              borderTop: "none",
-              borderLeft: "none",
-              borderRight: "none",
-              borderBottomWidth: "3px",
-              borderBottomColor: design.primaryColor,
+              border: "none",
+              borderBottom: `3px solid ${design.primaryColor}`,
             }}
             disabled
           />
@@ -97,8 +151,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
         return (
           <div className="space-y-3">
             <div
-              className="flex items-center space-x-3 text-sm font-medium mb-2"
-              style={getSecondaryTextStyles()}
+              className="flex items-center space-x-3 text-sm font-medium mb-2 form-question-label"
+              style={getAccentTextStyles()}
             >
               <svg
                 className="w-5 h-5"
@@ -121,11 +175,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
               style={{
                 ...inputStyles,
-                borderTop: "none",
-                borderLeft: "none",
-                borderRight: "none",
-                borderBottomWidth: "3px",
-                borderBottomColor: design.primaryColor,
+                border: "none",
+                borderBottom: `3px solid ${design.primaryColor}`,
               }}
               disabled
             />
@@ -160,11 +211,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
               style={{
                 ...inputStyles,
-                borderTop: "none",
-                borderLeft: "none",
-                borderRight: "none",
-                borderBottomWidth: "3px",
-                borderBottomColor: design.primaryColor,
+                border: "none",
+                borderBottom: `3px solid ${design.primaryColor}`,
               }}
               disabled
             />
@@ -245,11 +293,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium appearance-none cursor-pointer transition-colors duration-300"
               style={{
                 ...inputStyles,
-                borderTop: "none",
-                borderLeft: "none",
-                borderRight: "none",
-                borderBottomWidth: "3px",
-                borderBottomColor: design.primaryColor,
+                border: "none",
+                borderBottom: `3px solid ${design.primaryColor}`,
               }}
               disabled
             >
@@ -273,11 +318,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
             className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
             style={{
               ...inputStyles,
-              borderTop: "none",
-              borderLeft: "none",
-              borderRight: "none",
-              borderBottomWidth: "3px",
-              borderBottomColor: design.primaryColor,
+              border: "none",
+              borderBottom: `3px solid ${design.primaryColor}`,
             }}
             disabled
           />
@@ -296,34 +338,38 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
       >
         <div className="w-full max-w-3xl mx-auto px-8 space-y-8">
           {/* Logo Section - Show logo instead of icon */}
-          {design.logoUrl ? (
-            <div className="flex justify-center">
-              <img
-                src={design.logoUrl}
-                alt="Logo"
-                className="h-16 w-auto object-contain"
-                style={{
-                  maxWidth: "200px",
-                  maxHeight: "80px",
-                }}
-              />
+          {design.logoUrl && !logoError ? (
+            <div className="flex justify-start">
+              <div className="relative h-16 w-48">
+                <Image
+                  src={design.logoUrl}
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  sizes="(max-width: 768px) 100vw, 192px"
+                  onError={(e) => {
+                    setLogoError(true);
+                  }}
+                />
+              </div>
             </div>
-          ) : (
+          ) : design.logoUrl && logoError ? (
             <div className="flex justify-center">
-              <div className="h-16"></div> {/* Empty space if no logo */}
+              <div className="relative h-16 w-48">
+                <FallbackImage
+                  src={design.logoUrl}
+                  alt="Logo"
+                  className="w-full h-full object-contain"
+                />
+              </div>
             </div>
-          )}
+          ) : null}
 
           {/* Question Number with custom styling */}
           <div className="flex items-center space-x-6">
             <div
-              className="flex items-center justify-center w-12 h-12 text-white font-semibold text-lg shadow-lg"
-              style={{
-                backgroundColor: design.primaryColor,
-                boxShadow: design.shadows
-                  ? "0 4px 12px rgba(0,0,0,0.15)"
-                  : "none",
-              }}
+              className="flex items-center justify-center w-12 h-12 text-white font-semibold text-lg"
+              style={getNumberStyles()}
             >
               {question.order}
             </div>
@@ -335,9 +381,8 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
                 }}
               ></div>
               <span
-                className="font-medium"
+                className="font-medium form-question-label"
                 style={{
-                  color: design.secondaryColor,
                   fontFamily: design.fontFamily,
                 }}
               >
@@ -357,11 +402,56 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
 
             {question.description && (
               <p
-                className="text-lg leading-relaxed font-medium"
-                style={getSecondaryTextStyles()}
+                className="text-lg leading-relaxed font-medium form-description"
+                style={getAccentTextStyles()}
               >
                 {question.description}
               </p>
+            )}
+
+            {/* Question Image - Aligned to Left */}
+            {question.imageUrl && !imageError && (
+              <div className="w-full max-w-md">
+                <div className="relative w-full aspect-[4/3] max-h-48">
+                  <Image
+                    key={question.imageUrl}
+                    src={question.imageUrl}
+                    alt="Question illustration"
+                    fill
+                    className="object-cover"
+                    style={{
+                      borderRadius: `${design.borderRadius}px`,
+                    }}
+                    sizes="(max-width: 768px) 90vw, 448px"
+                    priority={false}
+                    onError={(e) => {
+                      // Silent error handling - set fallback state
+                      setImageError(true);
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Image Error Fallback - Aligned to Left */}
+            {question.imageUrl && imageError && (
+              <div className="w-full max-w-md">
+                <div
+                  className="relative w-full aspect-[4/3] max-h-48 bg-gray-50 border border-gray-200 flex items-center justify-center"
+                  style={{
+                    borderRadius: `${design.borderRadius}px`,
+                  }}
+                >
+                  <FallbackImage
+                    src={question.imageUrl}
+                    alt="Question illustration"
+                    className="w-full h-full object-cover"
+                    style={{
+                      borderRadius: `${design.borderRadius}px`,
+                    }}
+                  />
+                </div>
+              </div>
             )}
           </div>
 

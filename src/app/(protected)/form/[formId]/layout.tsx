@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { ArrowLeft, Eye, Save, Share2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useFormStore } from "@/stores/form-store";
+import { Button } from "@/components/ui/button";
 
 interface FormLayoutProps {
   children: React.ReactNode;
@@ -65,7 +66,7 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 title="Back to workspace"
               >
-                <ArrowLeft className="w-6 h-6 text-gray-600" />
+                <ArrowLeft className="w-5 h-5 text-gray-600" />
               </button>
 
               {/* Separator */}
@@ -81,31 +82,20 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
 
             {/* Center Section: Navigation Tabs with Smooth Indicator */}
             <div className="relative flex items-center space-x-1">
-              {/* Smooth sliding indicator line */}
-              <div
-                className="absolute h-1 bg-slate-700 rounded-b-full transition-all duration-300 ease-in-out"
-                style={{
-                  top: "-12px",
-                  width: `calc(${100 / navigationTabs.length}% - 2px)`,
-                  left: `calc(${
-                    activeTabIndex * (100 / navigationTabs.length)
-                  }% + 0.5px)`,
-                  transform: "translateX(0)",
-                }}
-              />
               {navigationTabs.map((tab, index) => (
-                <button
+                <Button
+                  variant={"ghost"}
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
                   className={cn(
                     "px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200",
                     activeTab === tab.id
-                      ? "text-slate-700 bg-slate-100"
+                      ? "bg-accent"
                       : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
                   )}
                 >
                   {tab.label}
-                </button>
+                </Button>
               ))}
             </div>
 
