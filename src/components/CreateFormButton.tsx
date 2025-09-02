@@ -61,7 +61,7 @@ export default function CreateFormButton({
       setOpen(false);
 
       // Redirect to form editor
-      router.push(`/form/${newForm.$id}`);
+      router.push(`/form/${newForm.$id}/create`);
     } catch (error) {
       console.error("Failed to create form:", error);
       toast.error(

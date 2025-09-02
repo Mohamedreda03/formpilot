@@ -440,6 +440,27 @@ export const formService = {
     }
   },
 
+  // Get a single form by ID (public access for form submission)
+  getForm: async (formId: string): Promise<Form> => {
+    try {
+      const response = await databases.getDocument(
+        DATABASE_ID,
+        FORMS_COLLECTION_ID,
+        formId
+      );
+
+      // Parse questions if they're stored as JSON string
+      if (typeof response.questions === "string") {
+        response.questions = JSON.parse(response.questions);
+      }
+
+      return response as unknown as Form;
+    } catch (error) {
+      console.error("Error fetching form:", error);
+      throw new Error("Form not found or no longer available");
+    }
+  },
+
   // Create a new form
   createForm: async (data: {
     title: string;
@@ -541,6 +562,88 @@ export const formService = {
     } catch (error) {
       console.error("Error deleting form:", error);
       throw error;
+    }
+  },
+};
+
+// Form Submissions Service
+export const submissionService = {
+  // Submit form responses
+  submitForm: async (data: {
+    formId: string;
+    responses: Array<{ questionId: string; answer: any }>;
+    userInfo?: {
+      userAgent?: string;
+    };
+  }): Promise<any> => {
+    try {
+      const submissionData = {
+        formId: data.formId,
+        responses: JSON.stringify(data.responses),
+        submittedAt: new Date().toISOString(),
+        userAgent: data.userInfo?.userAgent || "",
+      };
+
+      // Create submission record
+      const response = await databases.createDocument(
+        DATABASE_ID,
+        process.env.NEXT_PUBLIC_APPWRITE_SUBMISSIONS_COLLECTION_ID!,
+        ID.unique(),
+        submissionData,
+        [
+          Permission.read(Role.any()), // Allow anyone to read (for analytics)
+          Permission.write(Role.any()), // Allow anyone to write (for public forms)
+        ]
+      );
+
+      // Update form submission count
+      try {
+        const form = await databases.getDocument(
+          DATABASE_ID,
+          FORMS_COLLECTION_ID,
+          data.formId
+        );
+
+        await databases.updateDocument(
+          DATABASE_ID,
+          FORMS_COLLECTION_ID,
+          data.formId,
+          {
+            submissionCount: (form.submissionCount || 0) + 1,
+          }
+        );
+      } catch (updateError) {
+        console.warn("Failed to update submission count:", updateError);
+        // Don't throw error here, submission was successful
+      }
+
+      return response;
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      throw new Error("Failed to submit form responses");
+    }
+  },
+
+  // Get submissions for a form (for form owners)
+  getFormSubmissions: async (formId: string): Promise<any[]> => {
+    try {
+      const response = await databases.listDocuments(
+        DATABASE_ID,
+        process.env.NEXT_PUBLIC_APPWRITE_SUBMISSIONS_COLLECTION_ID!,
+        [
+          Query.equal("formId", formId),
+          Query.orderDesc("submittedAt"),
+          Query.limit(100),
+        ]
+      );
+
+      return response.documents.map((doc: any) => ({
+        ...doc,
+        responses: JSON.parse(doc.responses || "[]"),
+      }));
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      throw new Error("Failed to fetch form submissions");
     }
   },
 };

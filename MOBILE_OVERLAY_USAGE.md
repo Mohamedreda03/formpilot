@@ -84,7 +84,7 @@ interface MobileOverlayProps {
 ### Form Editor
 
 ```tsx
-// في صفحة form/[formId]
+// في صفحة form/[formId]/create
 <MobileOverlay />
 ```
 

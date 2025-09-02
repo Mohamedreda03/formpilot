@@ -148,7 +148,7 @@ export default function FormViewPage({
             </Button>
             <Button
               size="sm"
-              onClick={() => router.push(`/form/${params.formId}`)}
+              onClick={() => router.push(`/form/${params.formId}/create`)}
             >
               <Edit2 className="mr-2 h-4 w-4" />
               Edit Form

@@ -13,7 +13,7 @@ interface FormLayoutProps {
 }
 
 const navigationTabs = [
-  { id: "content", label: "Content", path: "" },
+  { id: "content", label: "Content", path: "/create" },
   { id: "workflow", label: "Workflow", path: "/workflow" },
   { id: "connect", label: "Connect", path: "/connect" },
 ];
@@ -33,6 +33,7 @@ export default function FormLayout({ children, params }: FormLayoutProps) {
   const getActiveTab = () => {
     if (pathname.includes("/workflow")) return "workflow";
     if (pathname.includes("/connect")) return "connect";
+    if (pathname.includes("/create")) return "content";
     return "content";
   };
 

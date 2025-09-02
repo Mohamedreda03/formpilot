@@ -88,11 +88,12 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
           <input
             type="text"
             placeholder={question.placeholder || "Type your answer here..."}
-            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300 form-input placeholder-[${design.secondaryColor}]`}
+            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300 form-input`}
             style={{
               ...inputStyles,
               border: "none",
               borderBottom: `3px solid ${design.primaryColor}`,
+              color: design.secondaryColor,
             }}
             disabled
           />
@@ -105,7 +106,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               question.placeholder || "Type your detailed answer here..."
             }
             rows={4}
-            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent resize-none font-medium transition-colors duration-300 form-textarea placeholder-[${design.secondaryColor}]`}
+            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent resize-none font-medium transition-colors duration-300 form-textarea`}
             style={{
               ...inputStyles,
               border: "none",
@@ -315,7 +316,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
             placeholder={
               question.placeholder || `Enter your ${question.type}...`
             }
-            className="w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent placeholder-gray-400 font-medium transition-colors duration-300"
+            className={`w-full text-xl border-0 border-b-3 focus:outline-none py-4 bg-transparent font-medium transition-colors duration-300`}
             style={{
               ...inputStyles,
               border: "none",
@@ -377,7 +378,7 @@ export default function QuestionPreview({ question }: QuestionPreviewProps) {
               <div
                 className="w-8 h-0.5 rounded-full"
                 style={{
-                  background: `linear-gradient(to right, ${design.secondaryColor}, transparent)`,
+                  background: `linear-gradient(to right, ${design.accentColor}, transparent)`,
                 }}
               ></div>
               <span

@@ -52,7 +52,7 @@ export function useForm(formId: string) {
         userId: user.$id,
       });
       setForm(newForm);
-      router.push(`/form/${newForm.id}`);
+      router.push(`/form/${newForm.id}/create`);
       return newForm;
     } catch (err: any) {
       setError(err.message || "Failed to create form");

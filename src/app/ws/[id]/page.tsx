@@ -167,7 +167,7 @@ export default function WorkspacePage() {
   };
 
   const handleEditForm = (formId: string) => {
-    router.push(`/form/${formId}`);
+    router.push(`/form/${formId}/create`);
   };
 
   const handleViewForm = (formId: string) => {
